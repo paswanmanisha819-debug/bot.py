@@ -45,6 +45,7 @@ def rate_limiter():
     return filters.create(f)
 
 # ----------------- BASE HANDLERS & ONBOARDING -----------------
+# ----------------- BASE HANDLERS & ONBOARDING -----------------
 @app.on_message(filters.command("start") & filters.private)
 async def start_command(client: Client, message: Message):
     user_id = message.from_user.id
@@ -52,13 +53,12 @@ async def start_command(client: Client, message: Message):
 
     await db.create_or_update_user(user_id, username)
 
-        welcome_text = (
+    welcome_text = (
         f"👋 *Namaste {username}!* Welcome to your personal **Local AI Study Companion**! 🚀\n\n"
         "Main aapka personal digital tutor hoon for Classes 9th-12th. I can solve tough Math proofs, "
         "explain deep Science concepts, take interactive tests, and create PDF notes dynamically.\n\n"
         "Chalo, first let me know your **Class** standard 👇"
-        )
-
+    )
 
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("Class 9", callback_data="set_class_9th"), InlineKeyboardButton("Class 10", callback_data="set_class_10th")],
@@ -66,7 +66,7 @@ async def start_command(client: Client, message: Message):
     ])
 
     await message.reply_text(welcome_text, reply_markup=keyboard)
-
+    
 
 # ----------------- OWNER INFO COMMAND -----------------
 @app.on_message(filters.command("owner") & filters.private)
