@@ -392,16 +392,18 @@ async def quiz_handler(client, callback_query):
 async def direct_question_handler(client_bot, message):
     question = message.text.replace("?", "").strip()
     await message.reply_text("Thinking... 🧠")
-    
+
     try:
         chat_completion = client.chat.completions.create(
             messages=[{"role": "user", "content": f"Answer this concisely for a student: {question}"}],
             model="llama-3.1-8b-instant",
         )
         answer = chat_completion.choices[0].message.content
-    await message.reply_text(f"✅ *Answer:*\n\n{answer}")
-except Exception as e:
-    await message.reply_text("Thinking... please try again!")
+        await message.reply_text(f"✅ *Answer:*\n\n{answer}")
+    except Exception as e:
+        await message.reply_text("Thinking... please try again!")
+        
+    
                 
 # ----------------- MAIN APP RUNNER -----------------
 if __name__ == "__main__":
