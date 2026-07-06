@@ -5,6 +5,7 @@ import json
 from datetime import datetime, timedelta
 from features import get_ai_generated_quiz
 from features import get_ai_generated_quiz, client
+from pyrogram import StopPropagation
 
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
@@ -387,14 +388,14 @@ async def quiz_handler(client, callback_query):
         [InlineKeyboardButton("🔄 New Question", callback_data=f"quiz_{student_class}")]
     ])
     await callback_query.message.edit_text(f"🧠 *AI Quiz ({student_class})*\n\n{question}", reply_markup=keyboard)
+# पुराने हैंडलर में बस 'group=1' जोड़ दो
+@app.on_message(filters.text, group=1) 
+async def old_setup_handler(client, message):
+    # ... तुम्हारा पुराना कोड यहाँ रहेगा ...
+    
 
-@app.on_message(filters.command("ask"), group=-1)
-async def direct_question_handler(client_bot, message):
-    if len(message.command) < 2:
-        await message.reply_text("Please ask a question! Example: `/ask What is motion`")
-        return
-        
-    question = message.text.split(" ", 1)[1]
+    # अगर यूजर का मैसेज किसी कमांड से शुरू नहीं हो रहा, तो उसे सीधा AI को भेज दो
+    question = message.text.strip()
     await message.reply_text("Thinking... 🧠")
     
     try:
@@ -404,10 +405,13 @@ async def direct_question_handler(client_bot, message):
         )
         answer = chat_completion.choices[0].message.content
         await message.reply_text(f"✅ *Answer:*\n\n{answer}")
+        # यह लाइन पुराने एरर वाले कोड को चलने से रोक देगी
+        raise StopPropagation
     except Exception as e:
         await message.reply_text("Thinking... please try again!")
+        raise StopPropagation
         
-
+        
 
 
 # ----------------- MAIN APP RUNNER -----------------
