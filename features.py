@@ -5,28 +5,22 @@ from groq import Groq
 client = Groq(api_key="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") 
 
 def get_ai_generated_quiz(student_class):
-    prompt = (f"Generate one short objective multiple-choice question "
-              f"for a {student_class} CBSE student. Include 4 options (A, B, C, D). "
-              f"Write the correct answer on the very last line.")
+    # AI को एकदम सख्त निर्देश कि फॉर्मेट कैसा होना चाहिए
+    prompt = (f"Generate an objective multiple-choice question for a {student_class} CBSE student.\n"
+              f"Format it EXACTLY like this:\n\n"
+              f"Question Text Here?\n"
+              f"A) Option 1\nB) Option 2\nC) Option 3\nD) Option 4\n\n"
+              f"||Correct Answer: [Write Answer Here]||")
     
     try:
         chat_completion = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
             model="llama-3.1-8b-instant",
         )
-        text = chat_completion.choices[0].message.content.strip()
-        
-        # Bulletproof Python Logic: पहले सारी खाली लाइनों को हटाओ
-        lines = [line for line in text.split("\n") if line.strip() != ""]
-        
-        # अब जो सबसे आखिरी लाइन बची है (वही आंसर है), उस पर काली पट्टी लगाओ
-        if len(lines) > 0:
-            lines[-1] = f"||{lines[-1]}||"
-            
-        return "\n".join(lines)
-            
+        return chat_completion.choices[0].message.content.strip()
     except Exception as e:
-        return "Thinking... please try again!"
-    
+        return "⚠️ Server is busy taking a nap! Please try again."
         
     
+        
+
