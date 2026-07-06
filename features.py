@@ -12,9 +12,11 @@ def get_ai_generated_quiz(student_class):
     try:
         chat_completion = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            model="llama3-8b-8192",
+            model="llama-3.1-8b-instant",
+            
         )
         return chat_completion.choices[0].message.content
     except Exception as e:
-        return f"Error details: {str(e)}"
+        return "Thinking... please try again!"
+    
     
