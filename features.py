@@ -17,6 +17,5 @@ def get_ai_generated_quiz(student_class):
         )
         return chat_completion.choices[0].message.content
     except Exception as e:
-        return "Thinking... please try again!"
-    
+        return "Thinking... please try again!"    
     
