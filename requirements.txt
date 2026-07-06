@@ -1,0 +1,9 @@
+pyrogram
+tgcrypto
+google-generativeai
+python-dotenv
+sqlalchemy
+aiosqlite
+pillow
+reportlab
+
