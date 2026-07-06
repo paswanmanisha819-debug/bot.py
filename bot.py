@@ -141,17 +141,16 @@ async def handle_text_doubt(client: Client, message: Message):
     current_prompt = f"[Context: Student in Class {user_data.student_class}, Board: {user_data.board}]\nQuestion: {message.text}"
     context_history.append({"role": "user", "parts": [current_prompt]})
 
-    try:
-        # Use Gemini 1.5 Flash for high-speed robust handling
-                chat_completion = client.chat.completions.create(
+        try:
+        chat_completion = client.chat.completions.create(
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": current_prompt}
             ],
             model="llama3-70b-8192",
         )
-    ai_response = chat_completion.choices[0].message.content
-
+        ai_response = chat_completion.choices[0].message.content
+            
 
         # Save structural states to DB
         await db.log_conversation(user_id, "user", message.text)
