@@ -1,7 +1,9 @@
 import asyncio
 import os
 import json
+
 from datetime import datetime, timedelta
+from features import get_ai_generated_quiz
 
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
@@ -61,11 +63,14 @@ async def start_command(client: Client, message: Message):
     )
 
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("Class 9", callback_data="set_class_9th"), InlineKeyboardButton("Class 10", callback_data="set_class_10th")],
-        [InlineKeyboardButton("Class 11", callback_data="set_class_11th"), InlineKeyboardButton("Class 12", callback_data="set_class_12th")]
+        [InlineKeyboardButton("9th Class", callback_data="quiz_9th"), 
+         InlineKeyboardButton("10th Class", callback_data="quiz_10th")],
+        [InlineKeyboardButton("11th Class", callback_data="quiz_11th"), 
+         InlineKeyboardButton("12th Class", callback_data="quiz_12th")]
     ])
-
-    await message.reply_text(welcome_text, reply_markup=keyboard)
+    
+    await message.reply_text("👋 Welcome! Select your class to start the AI Quiz:", reply_markup=keyboard)
+                        
     
 
 # ----------------- OWNER INFO COMMAND -----------------
@@ -373,11 +378,21 @@ async def handle_pdf_generation(client: Client, callback_query: CallbackQuery):
         if pdf_path:
             safe_cleanup(pdf_path)
 
+@app.on_callback_query(filters.regex(r"^quiz_"))
+async def quiz_handler(client, callback_query):
+    student_class = callback_query.data.split("_")[1]
+    await callback_query.answer("Generating AI Question...")
+    question = get_ai_generated_quiz(student_class)
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("🔄 New Question", callback_data=f"quiz_{student_class}")]
+    ])
+    await callback_query.message.edit_text(f"🧠 *AI Quiz ({student_class})*\n\n{question}", reply_markup=keyboard)
+    
 # ----------------- MAIN APP RUNNER -----------------
 if __name__ == "__main__":
     # Initialize connection pooling and migrate SQLite tables
     loop = asyncio.get_event_loop()
     loop.run_until_complete(db.init_db())
 
-    print("ðŸ¤– Local AI Study Companion bot is live and running...")
+    print("😊– Local AI Study Companion bot is live and running...")
     app.run()
