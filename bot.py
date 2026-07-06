@@ -169,6 +169,7 @@ async def handle_text_doubt(client: Client, message: Message):
         await processing_msg.edit_text("âŒ Sorry, standard query channels are busy right now. Please try again in a few minutes.")
       
         print(f"असली एरर यह है: {e}")
+        await processing_msg.edit_text(f"❌ Error: {str(e)}")
 
 # ----------------- MULTIMODAL INPUTS HANDLING -----------------
 @app.on_message(filters.photo & filters.private & rate_limiter())
