@@ -118,9 +118,9 @@ async def set_board_callback(client: Client, callback_query: CallbackQuery):
     selected_class = parts[2]
     selected_board = parts[3]
 
-        await db.create_or_update_user(user_id, callback_query.from_user.username, board=selected_board)
-
-        await callback_query.message.edit_text(
+    await db.create_or_update_user(user_id, callback_query.from_user.username, board=selected_board)
+    
+    await callback_query.message.edit_text(
         f"✅ Setup Complete!\n\n🎓 *Class:* {selected_class[:-2]}th\n🏛️ *Board:* {selected_board}\n\n"
         "Ab aap ready hain! Mujhse koi bhi question pucho: \n"
         "• Type text doubts directly.\n"
