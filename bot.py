@@ -388,7 +388,7 @@ async def quiz_handler(client, callback_query):
     ])
     await callback_query.message.edit_text(f"🧠 *AI Quiz ({student_class})*\n\n{question}", reply_markup=keyboard)
 
-@app.on_message(filters.command("ask"))
+@app.on_message(filters.command("ask"), group=-1)
 async def direct_question_handler(client_bot, message):
     if len(message.command) < 2:
         await message.reply_text("Please ask a question! Example: `/ask What is motion`")
