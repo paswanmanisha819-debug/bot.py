@@ -383,24 +383,46 @@ async def quiz_handler(client, callback_query):
     ])
     await callback_query.message.edit_text(f"🧠 *AI Quiz ({student_class})*\n\n{question}", reply_markup=keyboard)
 # पुराने हैंडलर में बस 'group=1' जोड़ दो
-@app.on_message(filters.text & ~filters.command(["start", "quiz", "owner"]))
-async def clean_question_handler(client_bot, message):
+@app.on_message(filters.text & ~filters.command(["start", "quiz", "owner", "ask"]))
+async def advanced_question_handler(client_bot, message):
     question = message.text.strip()
     
-    # पुराना मैसेज एडिट करेंगे, ताकि स्क्रीन पर कचरा न फैले
-    msg = await message.reply_text("Thinking... 🧠")
+    # 1. एडवांस 'Thinking' मैसेज
+    msg = await message.reply_text("🔍 *Scanning Knowledge Base... Please wait!* ⏳")
+    
+    # 2. AI को बताना कि उसका मालिक (Owner) कौन है!
+    system_instruction = (
+        "You are a highly advanced AI Study Companion. "
+        "You were created and developed by a brilliant developer named Aditya. "
+        "If anyone asks who made you, created you, or who your owner is, answer with pride that Aditya made you. "
+        "Keep your educational answers well-formatted, professional, and easy for students to understand."
+    )
     
     try:
+        # AI को System Instruction और User Question दोनों भेज रहे हैं
         chat_completion = client.chat.completions.create(
-            messages=[{"role": "user", "content": f"Answer this concisely for a student: {question}"}],
+            messages=[
+                {"role": "system", "content": system_instruction},
+                {"role": "user", "content": question}
+            ],
             model="llama-3.1-8b-instant",
         )
         answer = chat_completion.choices[0].message.content
-        await msg.edit_text(f"✅ *Answer:*\n\n{answer}")
+        
+        # 3. प्रीमियम और एडवांस UI डिज़ाइन
+        advanced_reply = (
+            f"🎓 **AI Study Companion**\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"{answer}\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"👨‍💻 *Developed by Aadit*"
+        )
+        
+        await msg.edit_text(advanced_reply)
         
     except Exception as e:
-        # अब 'Thinking' नहीं, असली एरर दिखेगा!
-        await msg.edit_text(f"⚠️ API Error (मुझे स्क्रीनशॉट भेजना): {str(e)}")
+        await msg.edit_text(f"⚠️ *API Error (Screenshot भेजो):*\n`{str(e)}`")
+    
          
 
 
