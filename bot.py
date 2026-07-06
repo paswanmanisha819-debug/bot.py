@@ -137,15 +137,9 @@ async def set_board_callback(client: Client, callback_query: CallbackQuery):
 
 
 # ----------------- CORE AI CORE EXECUTION -----------------
-@app.on_message(filters.text & filters.private & rate_limiter())
-async def handle_text_doubt(client: Client, message: Message):
-    user_id = message.from_user.id
-    user_data = await db.get_user(user_id)
 
-    if not user_data or not user_data.student_class:
-        return await message.reply_text("âš ï¸ Please run `/start` first to complete your class setup configuration.")
 
-    processing_msg = await message.reply_text("ðŸ”„ *Thinking... Aapke liye detail answer ready ho raha hai...*")
+    processing_msg = await message.reply_text("🤔”„ *Thinking... Aapke liye detail answer ready ho raha hai...*")
 
     # Extract Conversation Logs
     context_history = await db.get_recent_context(user_id, limit=6)
@@ -389,14 +383,12 @@ async def quiz_handler(client, callback_query):
     ])
     await callback_query.message.edit_text(f"🧠 *AI Quiz ({student_class})*\n\n{question}", reply_markup=keyboard)
 # पुराने हैंडलर में बस 'group=1' जोड़ दो
-@app.on_message(filters.text, group=1) 
-async def old_setup_handler(client, message):
-    # ... तुम्हारा पुराना कोड यहाँ रहेगा ...
-    
-
-    # अगर यूजर का मैसेज किसी कमांड से शुरू नहीं हो रहा, तो उसे सीधा AI को भेज दो
+@app.on_message(filters.text & ~filters.command(["start", "quiz", "owner"]))
+async def clean_question_handler(client_bot, message):
     question = message.text.strip()
-    await message.reply_text("Thinking... 🧠")
+    
+    # पुराना मैसेज एडिट करेंगे, ताकि स्क्रीन पर कचरा न फैले
+    msg = await message.reply_text("Thinking... 🧠")
     
     try:
         chat_completion = client.chat.completions.create(
@@ -404,14 +396,12 @@ async def old_setup_handler(client, message):
             model="llama-3.1-8b-instant",
         )
         answer = chat_completion.choices[0].message.content
-        await message.reply_text(f"✅ *Answer:*\n\n{answer}")
-        # यह लाइन पुराने एरर वाले कोड को चलने से रोक देगी
-        raise StopPropagation
+        await msg.edit_text(f"✅ *Answer:*\n\n{answer}")
+        
     except Exception as e:
-        await message.reply_text("Thinking... please try again!")
-        raise StopPropagation
-        
-        
+        # अब 'Thinking' नहीं, असली एरर दिखेगा!
+        await msg.edit_text(f"⚠️ API Error (मुझे स्क्रीनशॉट भेजना): {str(e)}")
+         
 
 
 # ----------------- MAIN APP RUNNER -----------------
