@@ -2,7 +2,7 @@ import random
 from groq import Groq
 
 # अपनी API Key यहाँ डालो
-client = Groq(api_key="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") 
+client = Groq(api_key="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") 
 
 def get_ai_generated_quiz(student_class):
     prompt = (f"Generate one important, short, and objective multiple-choice question "
