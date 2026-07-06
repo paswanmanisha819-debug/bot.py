@@ -21,8 +21,8 @@ from utils import generate_study_notes_pdf, safe_cleanup
 
 # Initialize Google Gemini Configuration
 genai.configure(api_key=GEMINI_API_KEY)
-flash_model = genai.GenerativeModel("gemini-2.0-flash", system_instruction=SYSTEM_PROMPT)
-pro_model = genai.GenerativeModel("gemini-2.0-flash", system_instruction=SYSTEM_PROMPT)
+flash_model = genai.GenerativeModel("gemini-1.5-flash", system_instruction=SYSTEM_PROMPT)
+pro_model = genai.GenerativeModel("gemini-1.5-flash", system_instruction=SYSTEM_PROMPT)
 
 
 # Active Bot Session Client
