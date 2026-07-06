@@ -6,4 +6,7 @@ sqlalchemy
 aiosqlite
 pillow
 reportlab
+SpeechRecognition
+pydub
+ffmpeg-python
 
