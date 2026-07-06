@@ -4,6 +4,7 @@ import json
 
 from datetime import datetime, timedelta
 from features import get_ai_generated_quiz
+from features import get_ai_generated_quiz, client
 
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
@@ -48,28 +49,27 @@ def rate_limiter():
 
 # ----------------- BASE HANDLERS & ONBOARDING -----------------
 # ----------------- BASE HANDLERS & ONBOARDING -----------------
-@app.on_message(filters.command("start") & filters.private)
-async def start_command(client: Client, message: Message):
-    user_id = message.from_user.id
-    username = message.from_user.username or "Student"
-
-    await db.create_or_update_user(user_id, username)
-
-    welcome_text = (
-        f"👋 *Namaste {username}!* Welcome to your personal **Local AI Study Companion**! 🚀\n\n"
-        "Main aapka personal digital tutor hoon for Classes 9th-12th. I can solve tough Math proofs, "
-        "explain deep Science concepts, take interactive tests, and create PDF notes dynamically.\n\n"
-        "Chalo, first let me know your **Class** standard 👇"
-    )
-
+@app.on_message(filters.command("start"))
+async def start_command(client_bot, message):
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("9th Class", callback_data="quiz_9th"), 
-         InlineKeyboardButton("10th Class", callback_data="quiz_10th")],
-        [InlineKeyboardButton("11th Class", callback_data="quiz_11th"), 
-         InlineKeyboardButton("12th Class", callback_data="quiz_12th")]
+        [InlineKeyboardButton("💬 Ask a Doubt", callback_data="help_doubt"), 
+         InlineKeyboardButton("🧠 Take a Quiz", callback_data="show_classes")]
+    ])
+    await message.reply_text("👋 Welcome to AI Study Bot!\n\nChoose what you want to do:", reply_markup=keyboard)
+
+@app.on_callback_query(filters.regex("help_doubt"))
+async def help_doubt_handler(client_bot, callback_query):
+    await callback_query.message.edit_text("💡 *Ask your doubt!*\n\nJust type a `?` before your question.\nExample: `? What is motion`")
+
+@app.on_callback_query(filters.regex("show_classes"))
+async def show_classes_handler(client_bot, callback_query):
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("9th", callback_data="quiz_9th"), InlineKeyboardButton("10th", callback_data="quiz_10th")],
+        [InlineKeyboardButton("11th", callback_data="quiz_11th"), InlineKeyboardButton("12th", callback_data="quiz_12th")]
     ])
     
-    await message.reply_text("👋 Welcome! Select your class to start the AI Quiz:", reply_markup=keyboard)
+    await callback_query.message.edit_text("Select your class for the Quiz:", reply_markup=keyboard)
+                              
                         
     
 
@@ -387,7 +387,22 @@ async def quiz_handler(client, callback_query):
         [InlineKeyboardButton("🔄 New Question", callback_data=f"quiz_{student_class}")]
     ])
     await callback_query.message.edit_text(f"🧠 *AI Quiz ({student_class})*\n\n{question}", reply_markup=keyboard)
+
+@app.on_message(filters.regex(r"^\?"))
+async def direct_question_handler(client_bot, message):
+    question = message.text.replace("?", "").strip()
+    await message.reply_text("Thinking... 🧠")
     
+    try:
+        chat_completion = client.chat.completions.create(
+            messages=[{"role": "user", "content": f"Answer this concisely for a student: {question}"}],
+            model="llama-3.1-8b-instant",
+        )
+        answer = chat_completion.choices[0].message.content
+    await message.reply_text(f"✅ *Answer:*\n\n{answer}")
+except Exception as e:
+    await message.reply_text("Thinking... please try again!")
+                
 # ----------------- MAIN APP RUNNER -----------------
 if __name__ == "__main__":
     # Initialize connection pooling and migrate SQLite tables
