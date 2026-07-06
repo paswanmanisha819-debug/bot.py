@@ -346,7 +346,7 @@ async def handle_quiz_answer(client: Client, callback_query: CallbackQuery):
         await db.save_quiz_stat(user_id, quiz["subject"], final_score)
         await app.send_message(
             callback_query.message.chat.id,
-            f"ðŸ *Quiz Complete!* \nYour Final Score: **{final_score}/3**\n"
+            f"✅ *Quiz Complete!* \nYour Final Score: **{final_score}/3**\n"
             f"{'Excellent preparation! Keep it up!' if final_score >= 2 else 'Koi baat nahi! Dubara padhein aur try karein.'}"
         )
         del ACTIVE_QUIZZES[user_id]
@@ -388,11 +388,15 @@ async def quiz_handler(client, callback_query):
     ])
     await callback_query.message.edit_text(f"🧠 *AI Quiz ({student_class})*\n\n{question}", reply_markup=keyboard)
 
-@app.on_message(filters.regex(r"^\?"))
+@app.on_message(filters.command("ask"))
 async def direct_question_handler(client_bot, message):
-    question = message.text.replace("?", "").strip()
+    if len(message.command) < 2:
+        await message.reply_text("Please ask a question! Example: `/ask What is motion`")
+        return
+        
+    question = message.text.split(" ", 1)[1]
     await message.reply_text("Thinking... 🧠")
-
+    
     try:
         chat_completion = client.chat.completions.create(
             messages=[{"role": "user", "content": f"Answer this concisely for a student: {question}"}],
@@ -403,8 +407,9 @@ async def direct_question_handler(client_bot, message):
     except Exception as e:
         await message.reply_text("Thinking... please try again!")
         
-    
-                
+
+
+
 # ----------------- MAIN APP RUNNER -----------------
 if __name__ == "__main__":
     # Initialize connection pooling and migrate SQLite tables
