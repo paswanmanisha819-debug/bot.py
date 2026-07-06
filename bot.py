@@ -52,12 +52,13 @@ async def start_command(client: Client, message: Message):
 
     await db.create_or_update_user(user_id, username)
 
-    welcome_text = (
-        f"ðŸ‘‹ *Namaste {username}!* Welcome to your personal **Local AI Study Companion**! ðŸš€\n\n"
+        welcome_text = (
+        f"👋 *Namaste {username}!* Welcome to your personal **Local AI Study Companion**! 🚀\n\n"
         "Main aapka personal digital tutor hoon for Classes 9th-12th. I can solve tough Math proofs, "
         "explain deep Science concepts, take interactive tests, and create PDF notes dynamically.\n\n"
-        "Chalo, first let me know your **Class** standardðŸ‘‡"
-    )
+        "Chalo, first let me know your **Class** standard 👇"
+        )
+
 
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("Class 9", callback_data="set_class_9th"), InlineKeyboardButton("Class 10", callback_data="set_class_10th")],
@@ -100,10 +101,10 @@ async def set_class_callback(client: Client, callback_query: CallbackQuery):
         [InlineKeyboardButton("State Board / Other", callback_data=f"set_board_{selected_class}_State")]
     ])
 
-    await callback_query.message.edit_text(
-        f"ðŸŽ¯ Excellent! Selected **Class {selected_class[:-2]}**.\nNow select your educational board:",
+        await callback_query.message.edit_text(
+        f"🎯 Excellent! Selected **Class {selected_class[:-2]}**.\nNow select your educational board:",
         reply_markup=board_keyboard
-    )
+        )
 
 @app.on_callback_query(filters.regex(r"^set_board_"))
 async def set_board_callback(client: Client, callback_query: CallbackQuery):
@@ -114,14 +115,15 @@ async def set_board_callback(client: Client, callback_query: CallbackQuery):
 
     await db.create_or_update_user(user_id, callback_query.from_user.username, board=selected_board)
 
-    await callback_query.message.edit_text(
-        f"âœ… Setup Complete!\n\nðŸŽ“ *Class:* {selected_class[:-2]}th\nðŸ›ï¸ *Board:* {selected_board}\n\n"
+        await callback_query.message.edit_text(
+        f"✅ Setup Complete!\n\n🎓 *Class:* {selected_class[:-2]}th\n🏛️ *Board:* {selected_board}\n\n"
         "Ab aap ready hain! Mujhse koi bhi question pucho: \n"
-        "â€¢ Type text doubts directly.\n"
-        "â€¢ Send a **Photo** of a diagram or numerical question.\n"
-        "â€¢ Send a **Voice Note** explaining your question!\n\n"
+        "• Type text doubts directly.\n"
+        "• Send a **Photo** of a diagram or numerical question.\n"
+        "• Send a **Voice Note** explaining your question!\n\n"
         "Try calling `/quiz` to take a quick multi-choice mock evaluation!"
-    )
+        )
+
 
 # ----------------- CORE AI CORE EXECUTION -----------------
 @app.on_message(filters.text & filters.private & rate_limiter())
