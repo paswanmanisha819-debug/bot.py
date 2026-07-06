@@ -150,7 +150,7 @@ async def handle_text_doubt(client: Client, message: Message):
             ],
             model="llama3-70b-8192",
         )
-  ai_response = chat_completion.choices[0].message.content
+    ai_response = chat_completion.choices[0].message.content
 
 
         # Save structural states to DB
