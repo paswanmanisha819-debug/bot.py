@@ -140,8 +140,7 @@ async def handle_text_doubt(client: Client, message: Message):
     # Inject current parameters dynamically
     current_prompt = f"[Context: Student in Class {user_data.student_class}, Board: {user_data.board}]\nQuestion: {message.text}"
     context_history.append({"role": "user", "parts": [current_prompt]})
-
-        try:
+    try:
         chat_completion = client.chat.completions.create(
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
