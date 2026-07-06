@@ -300,7 +300,7 @@ async def send_next_quiz_question(client: Client, user_id: int, chat_id: int):
         buttons.append([InlineKeyboardButton(option, callback_data=f"quiz_ans_{o_idx}")])
 
     keyboard = InlineKeyboardMarkup(buttons)
-    await client.send_message(chat_id, text, reply_markup=keyboard)
+    await app.send_message(chat_id, text, reply_markup=keyboard)
 
 @app.on_callback_query(filters.regex(r"^quiz_ans_"))
 async def handle_quiz_answer(client: Client, callback_query: CallbackQuery):
@@ -325,12 +325,12 @@ async def handle_quiz_answer(client: Client, callback_query: CallbackQuery):
 
     quiz["current_index"] += 1
     if quiz["current_index"] < 3:
-        await send_next_quiz_question(client, user_id, callback_query.message.chat.id)
+        await send_next_quiz_question(app, user_id, callback_query.message.chat.id)
     else:
         # Out of bounds - End evaluation telemetry reporting
         final_score = quiz["score"]
         await db.save_quiz_stat(user_id, quiz["subject"], final_score)
-        await client.send_message(
+        await app.send_message(
             callback_query.message.chat.id,
             f"ðŸ *Quiz Complete!* \nYour Final Score: **{final_score}/3**\n"
             f"{'Excellent preparation! Keep it up!' if final_score >= 2 else 'Koi baat nahi! Dubara padhein aur try karein.'}"
