@@ -1,6 +1,6 @@
 pyrogram
 tgcrypto
-google-generativeai>=0.7.0
+groq
 python-dotenv
 sqlalchemy
 aiosqlite
