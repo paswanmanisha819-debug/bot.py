@@ -146,7 +146,7 @@ async def handle_text_doubt(client: Client, message: Message):
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": current_prompt}
             ],
-            model="llama3-8b-8192",
+            model="llama-3.1-70b-versatile",
         )
         ai_response = chat_completion.choices[0].message.content
             
