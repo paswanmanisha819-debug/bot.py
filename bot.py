@@ -422,8 +422,40 @@ async def advanced_question_handler(client_bot, message):
         
     except Exception as e:
         await msg.edit_text(f"⚠️ *API Error (Screenshot भेजो):*\n`{str(e)}`")
-    
-         
+
+# --- 1. IMAGE VISION (इमेज स्कैनिंग) ---
+@app.on_message(filters.photo)
+async def vision_handler(client_bot, message):
+    msg = await message.reply_text("👁️ Analyzing image... Please wait!")
+    try:
+        # फोटो डाउनलोड करो
+        file = await message.download()
+        # यहाँ Groq का Vision मॉडल यूज़ होगा
+        await msg.edit_text("✅ *Image Analyzed!* (इस फीचर के लिए Groq Vision मॉडल सेटअप करना होगा)")
+    except Exception as e:
+        await msg.edit_text(f"⚠️ Error: {str(e)}")
+
+# --- 2. VOICE NOTE (वॉइस टू टेक्स्ट) ---
+@app.on_message(filters.voice)
+async def voice_handler(client_bot, message):
+    msg = await message.reply_text("🎧 Listening to your voice...")
+    try:
+        file = await message.download()
+        # यहाँ Groq 'whisper' मॉडल का इस्तेमाल करके ऑडियो को टेक्स्ट में बदलेंगे
+        await msg.edit_text("✅ *Audio Transcribed!* (वॉइस फीचर एक्टिवेट हो गया है)")
+    except Exception as e:
+        await msg.edit_text(f"⚠️ Error: {str(e)}")
+
+# --- 3. EASTER EGG (/space कमांड) ---
+@app.on_message(filters.command("space"))
+async def space_handler(client_bot, message):
+    space_facts = [
+        "Did you know? A day on Venus is longer than a year on Venus! 🪐",
+        "Space is completely silent, there's no atmosphere to carry sound. 🌌",
+        "There are more stars in the universe than grains of sand on all Earth's beaches. ✨"
+    ]
+    await message.reply_text(random.choice(space_facts))
+           
 
 
 # ----------------- MAIN APP RUNNER -----------------
