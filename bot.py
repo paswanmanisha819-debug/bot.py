@@ -13,16 +13,14 @@ from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, 
 from pyrogram.errors import FloodWait
 from pyrogram.enums import ParseMode  # यह लाइन पक्का सुनिश्चित करें[span_2](start_span)[span_2](end_span)
 
-import google.generativeai as genai
+from groq import Groq
 
 from config import API_ID, API_HASH, BOT_TOKEN, GEMINI_API_KEY, SYSTEM_PROMPT, QUIZ_PROMPT, TEMP_DIR
 import database as db
 from utils import generate_study_notes_pdf, safe_cleanup
 
 # Initialize Google Gemini Configuration
-genai.configure(api_key=GEMINI_API_KEY)
-flash_model = genai.GenerativeModel("gemini-1.5-flash", system_instruction=SYSTEM_PROMPT)
-pro_model = genai.GenerativeModel("gemini-1.5-flash", system_instruction=SYSTEM_PROMPT)
+client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 
 # Active Bot Session Client
@@ -145,8 +143,15 @@ async def handle_text_doubt(client: Client, message: Message):
 
     try:
         # Use Gemini 1.5 Flash for high-speed robust handling
-        response = await asyncio.to_thread(flash_model.generate_content, context_history)
-        ai_response = response.text
+                chat_completion = client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": current_prompt}
+            ],
+            model="llama3-70b-8192",
+        )
+        ai_response = chat_completion.choices[0].message.content
+
 
         # Save structural states to DB
         await db.log_conversation(user_id, "user", message.text)
