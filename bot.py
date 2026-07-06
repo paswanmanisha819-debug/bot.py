@@ -20,7 +20,7 @@ import database as db
 from utils import generate_study_notes_pdf, safe_cleanup
 
 # Initialize Google Gemini Configuration
-client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 
 # Active Bot Session Client
@@ -141,7 +141,7 @@ async def handle_text_doubt(client: Client, message: Message):
     current_prompt = f"[Context: Student in Class {user_data.student_class}, Board: {user_data.board}]\nQuestion: {message.text}"
     context_history.append({"role": "user", "parts": [current_prompt]})
     try:
-        chat_completion = client.chat.completions.create(
+        chat_completion = groq_client.chat.completions.create(
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": current_prompt}
