@@ -183,7 +183,7 @@ async def handle_photo_doubt(client: Client, message: Message):
     user_id = message.from_user.id
     user_data = await db.get_user(user_id)
 
-    processing_msg = await message.reply_text("ðŸ–¼ï¸ *Scanning Image via Vision Engine... Step-by-step resolution ready ho rahi hai.*")
+    processing_msg = await message.reply_text("🔍¸*Scanning Image via Vision Engine... Step-by-step resolution ready ho rahi hai.*")
 
     # Download Photo safely
     local_img_path = await message.download(file_name=os.path.join(TEMP_DIR, f"img_{user_id}.jpg"))
@@ -205,9 +205,11 @@ async def handle_photo_doubt(client: Client, message: Message):
         await db.log_conversation(user_id, "user", f"[Sent Photo] {caption}")
         await db.log_conversation(user_id, "model", ai_response)
 
+                # Actionable inline buttons
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("ðŸ“¥ Download Notes as PDF", callback_data=f"gen_pdf_{message.id}")]
+            [InlineKeyboardButton("📥 Download Notes as PDF", callback_data=f"gen_pdf_{message.id}")]
         ])
+
 
         await processing_msg.delete()
         await message.reply_text(ai_response, reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN)
