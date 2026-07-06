@@ -353,13 +353,13 @@ async def handle_pdf_generation(client: Client, callback_query: CallbackQuery):
         # Run CPU heavy operations thread safe without blocking main execution
         pdf_path = await asyncio.to_thread(generate_study_notes_pdf, user_id, topic_header, text_content)
 
-        await client.send_document(
+        await app.send_document (
             chat_id=callback_query.message.chat.id,
             document=pdf_path,
             caption="ðŸ“š Here are your formatted compilation notes. All the best for your preparation!"
         )
     except Exception as e:
-        await client.send_message(callback_query.message.chat.id, "âŒ Verification failed while packing the document layout engine.")
+        await app.send_message(callback_query.message.chat.id, "âŒ Verification failed while packing the document layout engine.")
     finally:
         if pdf_path:
             safe_cleanup(pdf_path)
