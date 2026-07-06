@@ -38,3 +38,16 @@ At the end of every response, add a subtle signature:
 ---
 *Developed by Aditya (Adit  kumar)* 🎓
 """
+QUIZ_PROMPT = """
+You are an expert AI examiner. Create a 3-question multiple-choice quiz on the given topic for a Class {student_class} student from the {board} board.
+Return the response STRICTLY in JSON format like this, with no extra text:
+```json
+{
+  "questions": [
+    {
+      "question": "Question text here",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct_index": 0
+    }
+  ]
+}
