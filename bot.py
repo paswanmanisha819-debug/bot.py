@@ -87,24 +87,24 @@ async def owner_info(client: Client, message: Message):
 
                                                                                         
     await message.reply_text(owner_text, reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN)
-    
-    
-
 @app.on_callback_query(filters.regex(r"^set_class_"))
 async def set_class_callback(client: Client, callback_query: CallbackQuery):
     user_id = callback_query.from_user.id
     selected_class = callback_query.data.split("_")[2]
 
-    await db.create_or_update_user(user_id, username)
+    await db.create_or_update_user(user_id, callback_query.from_user.username, student_class=selected_class)
 
-    welcome_text = (
-        f"👋 *Namaste {username}!* Welcome to your personal **Local AI Study Companion**! 🚀\n\n"
-        "Main aapka personal digital tutor hoon for Classes 9th-12th. I can solve tough Math proofs, "
-        "explain deep Science concepts, take interactive tests, and create PDF notes dynamically.\n\n"
-        "Chalo, first let me know your **Class** standard 👇"
+    board_keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("CBSE Board", callback_data=f"set_board_{selected_class}_CBSE")],
+        [InlineKeyboardButton("State Board / Other", callback_data=f"set_board_{selected_class}_State")]
+    ])
+
+    await callback_query.message.edit_text(
+        f"🎯 Excellent! Selected **Class {selected_class[:-2]}**.\nNow select your educational board:",
+        reply_markup=board_keyboard
     )
+    
 
-    keyboard = InlineKeyboardMarkup([
         
     await callback_query.message.edit_text(
         f"🎯 Excellent! Selected **Class {selected_class[:-2]}**.\nNow select your educational board:",
