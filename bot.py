@@ -84,6 +84,7 @@ async def owner_info(client: Client, message: Message):
         [InlineKeyboardButton("📱 Follow me on Instagram", url="https://www.instagram.com/aadit_paswan.007?igsh=MW93ZGJvaGVwNGNlNg==")],
         [InlineKeyboardButton("💬 Message me on Telegram", url="https://t.me/your_telegram_username")]
     ])
+
                                                                                         
     await message.reply_text(owner_text, reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN)
     
