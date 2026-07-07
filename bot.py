@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from features import get_ai_generated_quiz
 from features import get_ai_generated_quiz, client
 from pyrogram import StopPropagation
+from features import get_ai_generated_quiz_from_image
 
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
