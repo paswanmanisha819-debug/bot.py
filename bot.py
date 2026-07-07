@@ -84,7 +84,7 @@ async def save_profile(client, cb):
     )
     await cb.message.edit_text(success_msg)
 
-# --- 2. ADVANCED TEXT SOLVER (Ultra-Elite UI Upgrade) ---
+# --- 2. ADVANCED TEXT SOLVER (Ultra-Clean UI) ---
 @app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space"]))
 async def smart_solver(client, message):
     uid = message.from_user.id
@@ -92,21 +92,20 @@ async def smart_solver(client, message):
         return await message.reply("⚠️ **Please use the `/setup` command first.**")
     
     u = user_profiles[uid]
-    processing_msg = await message.reply("🔍 *Analyzing your query like a Pro...* ⏳")
+    processing_msg = await message.reply("🔍 *Analyzing...* ⏳")
     
     try:
         from groq import Groq
         groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
-        # एकदम तगड़ा और क्लीन UI प्रॉम्प्ट
+        # यहाँ मैंने हेडर (##) को पूरी तरह से हटा दिया है और सिर्फ बोल्ड का इस्तेमाल किया है
         sys_prompt = (
             f"You are an Elite AI Study Companion. Provide a high-quality explanation for a {u['class']}th grade {u['subject']} student. "
-            f"CRITICAL RULES: "
-            f"1. Use **bold emojis** and clean headers for sections. "
-            f"2. Use '•' for all bullet points. "
-            f"3. Use a clear, logical structure. "
-            f"4. ABSOLUTELY NO Hindi text, use professional English only. "
-            f"5. End with a bold '💡 Quick Summary' section."
+            f"RULES: 1. Use **bold emoji headers** like **🚀 Introduction** instead of ##. "
+            f"2. Use '•' for bullet points. "
+            f"3. NO #, ##, or ### symbols allowed. "
+            f"4. Professional English only. "
+            f"5. End with a **💡 Quick Summary** section."
         )
         
         chat_completion = groq_client.chat.completions.create(
@@ -115,19 +114,18 @@ async def smart_solver(client, message):
             temperature=0.1
         )
         
-        clean_answer = chat_completion.choices[0].message.content
+        # यहाँ हम सारी गंदगी (##, #, [], /) एक साथ हटा रहे हैं
+        raw_answer = chat_completion.choices[0].message.content
+        clean_answer = raw_answer.replace("###", "").replace("##", "").replace("#", "").replace("/", "").replace("[", "").replace("]", "").replace("*", "")
         
-        # YouTube Call
-        search_query = f"{message.text} class {u['class']} CBSE {u['subject']} explanation -shorts -animation"
+        search_query = f"{message.text} class {u['class']} CBSE {u['subject']} explanation lecture -shorts -animation"
         youtube_link = await asyncio.to_thread(get_direct_video, search_query)
         
-        # एकदम तगड़े बटन
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link),
              InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")]
         ])
         
-        # एकदम क्लीन और प्रीमियम रिप्लाई फॉर्मेट
         final_reply = (
             f"📖 **STUDY COMPANION: {u['subject'].upper()}**\n"
             f"━━━━━━━━━━━━━━━━━━━━\n\n"
