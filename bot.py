@@ -86,22 +86,20 @@ async def smart_solver(client, message):
         sys_prompt = (
             f"You are an Elite AI Study Companion developed by Aditya. "
             f"Provide a highly accurate, structured answer for a {u['class']}th grade {u['subject']} CBSE student. "
-            f"!!! CRITICAL LANGUAGE RULE: Always respond in Professional English, REGARDLESS of the language of the user's input. !!! "
+            
+            f"!!! MANDATORY LANGUAGE RULE: You MUST answer EXCLUSIVELY in Professional English. "
+            f"Even if the user asks in Hindi or asks for Hindi terms, you MUST translate everything to English. "
+            f"Do NOT include any Hindi characters, Devanagari script, or mixed-language text. !!! "
+            
             f"CRITICAL FORMATTING RULES: "
             f"1. HEADINGS: DO NOT use markdown (#, ##). Use **bold text** with emojis for all headings. "
             f"2. BULLET POINTS: Use the '•' symbol. NEVER use '*' or '-'. "
-            f"3. MATHEMATICS: NEVER use LaTeX. Use real math unicode symbols (e.g., ², ½, ×). "
+            f"3. MATHEMATICS: NEVER use LaTeX or programming symbols like '^' or '*'. Use real math unicode symbols (e.g., ², ½, ×). "
             f"4. HIGHLIGHTING: Always **bold** key terms and definitions. "
             f"5. SPACING: Add a clear blank line between EVERY paragraph. "
             f"6. CONCLUSION: Always end with a '**💡 Quick Summary:**' section."
         )
         
-        
-        chat_completion = groq_client.chat.completions.create(
-            messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": message.text}],
-            model="llama-3.3-70b-versatile",
-            temperature=0.15 
-        )
         
         answer = chat_completion.choices[0].message.content.replace("### ", "").replace("## ", "").replace("# ", "")
         
