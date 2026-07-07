@@ -84,7 +84,7 @@ async def save_profile(client, cb):
     )
     await cb.message.edit_text(success_msg)
 
-# --- 2. ADVANCED TEXT SOLVER (Ultra-Clean UI) ---
+# --- 2. ADVANCED TEXT SOLVER (100% ChatGPT Style UI) ---
 @app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space"]))
 async def smart_solver(client, message):
     uid = message.from_user.id
@@ -92,33 +92,38 @@ async def smart_solver(client, message):
         return await message.reply("⚠️ **Please use the `/setup` command first.**")
     
     u = user_profiles[uid]
-    processing_msg = await message.reply("🔍 *Analyzing...* ⏳")
+    processing_msg = await message.reply("🔍 *Analyzing your query like ChatGPT...* ⏳")
     
     try:
         from groq import Groq
         groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
-        # यहाँ मैंने हेडर (##) को पूरी तरह से हटा दिया है और सिर्फ बोल्ड का इस्तेमाल किया है
+        # 🌟 100% CHATGPT STYLE PROMPT 🌟
         sys_prompt = (
-            f"You are an Elite AI Study Companion. Provide a high-quality explanation for a {u['class']}th grade {u['subject']} student. "
-            f"RULES: 1. Use **bold emoji headers** like **🚀 Introduction** instead of ##. "
-            f"2. Use '•' for bullet points. "
-            f"3. NO #, ##, or ### symbols allowed. "
-            f"4. Professional English only. "
-            f"5. End with a **💡 Quick Summary** section."
+            f"You are an Elite AI Study Companion for a {u['class']}th grade {u['subject']} student. "
+            f"RESPOND IN PROFESSIONAL ENGLISH ONLY. "
+            f"FORMATTING RULES TO MIMIC CHATGPT: "
+            f"1. HEADINGS: Do NOT use markdown headers (#, ##, ###). Use **Bold Text** instead. "
+            f"2. BULLETS: Use the '•' symbol for all lists. "
+            f"3. HIGHLIGHTING: Always **bold** important keywords, terms, and definitions. "
+            f"4. MATH & FORMULAS: NEVER use LaTeX or programming symbols like '^' or '*'. Use real math unicode (e.g., ², ½, ×, ÷). Write formulas on a clean, separate line. "
+            f"5. SPACING: Double space between paragraphs for readability. "
+            f"6. SUMMARY: Always end with a '**💡 Quick Summary:**' section."
         )
         
         chat_completion = groq_client.chat.completions.create(
             messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": message.text}],
             model="llama-3.3-70b-versatile",
-            temperature=0.1
+            temperature=0.15
         )
         
-        # यहाँ हम सारी गंदगी (##, #, [], /) एक साथ हटा रहे हैं
         raw_answer = chat_completion.choices[0].message.content
-        clean_answer = raw_answer.replace("###", "").replace("##", "").replace("#", "").replace("/", "").replace("[", "").replace("]", "").replace("*", "")
         
-        search_query = f"{message.text} class {u['class']} CBSE {u['subject']} explanation lecture -shorts -animation"
+        # ⚠️ सिर्फ फालतू कचरा (##) हटाएंगे, '*' नहीं हटाएंगे वरना बोल्ड काम नहीं करेगा!
+        clean_answer = raw_answer.replace("### ", "").replace("## ", "").replace("# ", "").replace("`", "")
+        
+        # YouTube Call
+        search_query = f"{message.text} class {u['class']} CBSE {u['subject']} explanation -shorts -animation"
         youtube_link = await asyncio.to_thread(get_direct_video, search_query)
         
         keyboard = InlineKeyboardMarkup([
@@ -127,18 +132,18 @@ async def smart_solver(client, message):
         ])
         
         final_reply = (
-            f"📖 **STUDY COMPANION: {u['subject'].upper()}**\n"
+            f"📖 **{u['subject'].upper()} STUDY GUIDE**\n"
             f"━━━━━━━━━━━━━━━━━━━━\n\n"
             f"{clean_answer}\n\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"👨‍💻 *Engineered by Aditya*\n"
-            f"📸 [Follow me on Instagram](https://www.instagram.com/aadit_paswan.007)"
+            f"👨‍💻 *Engineered by Aditya* | 📸 [Follow on Instagram](https://www.instagram.com/aadit_paswan.007)"
         )
         
         await processing_msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
         
     except Exception as e:
         await processing_msg.edit_text(f"⚠️ *System Error:* `{str(e)}`")
+        
         
         
  
