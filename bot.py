@@ -459,10 +459,10 @@ async def advanced_question_handler(client_bot, message):
         await msg.edit_text(f"⚠️ *API Error (Screenshot भेजो):*\n`{str(e)}`")
 
 
-# --- 1. SMART IMAGE VISION HANDLER ---
+
+# --- 1. SMART IMAGE VISION HANDLER (Premium UI) ---
 @app.on_message(filters.photo)
 async def vision_handler(client_bot, message):
-    # अगर यूजर ने फोटो के नीचे कोई सवाल लिखा है, तो उसे पकड़ो
     user_question = message.caption if message.caption else "Explain this image/diagram clearly for a 9th grade student."
     
     msg = await message.reply_text("🔍 *Scanning Image & Finding Answer...* ⏳")
@@ -473,12 +473,17 @@ async def vision_handler(client_bot, message):
         with open(image_path, "rb") as image_file:
             base64_image = base64.b64encode(image_file.read()).decode('utf-8')
 
-        # Groq AI से सवाल का जवाब मांगना
+        # 🌟 प्रॉम्प्ट अपडेट: AI को बताया कि UI के लिए # का इस्तेमाल न करे
+        ai_prompt = (
+            f"Answer concisely. IMPORTANT FOR TELEGRAM UI: Do NOT use markdown headers like #, ##, or ###. "
+            f"Use **bold text** for headings and standard bullet points. Question: {user_question}"
+        )
+
         chat_completion = client.chat.completions.create(
             messages=[{
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": f"Answer this concisely: {user_question}"},
+                    {"type": "text", "text": ai_prompt},
                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
                 ]
             }],
@@ -486,20 +491,21 @@ async def vision_handler(client_bot, message):
         )
         answer = chat_completion.choices[0].message.content
         
-        # 🌟 मैजिक: एक बटन बनाना जो पुरानी फोटो की ID सेव रखेगा
+        # 🌟 Python Magic: बचे-खुचे कचरे (###) को सुंदर डिज़ाइन में बदलना
+        answer = answer.replace("### ", "🔹 ").replace("## ", "🔸 ").replace("# ", "🎯 ")
+        
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton("🧠 Generate Quiz from this Image", callback_data=f"imgquiz_{message.id}")]
         ])
         
         advanced_reply = (
-            f"🖼️ *Image Analysis*\n"
+            f"🖼️ **Image Analysis**\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"{answer}\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"👨‍💻 *Developed by Aditya*"
         )
         
-        # जवाब के साथ बटन भी भेज दो
         await msg.edit_text(advanced_reply, reply_markup=keyboard)
         
     except Exception as e:
@@ -508,6 +514,7 @@ async def vision_handler(client_bot, message):
     finally:
         if image_path and os.path.exists(image_path):
             os.remove(image_path)
+        
     
             
         
