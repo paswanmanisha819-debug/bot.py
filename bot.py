@@ -400,7 +400,8 @@ async def advanced_question_handler(client_bot, message):
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": question}
             ],
-            model="llama-3.1-8b-instant",
+            model="llama-3.2-11b-vision-preview",
+            
         )
         answer = chat_completion.choices[0].message.content
         
