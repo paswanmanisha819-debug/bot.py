@@ -102,8 +102,8 @@ async def smart_solver(client, message):
         await db.log_conversation(uid, "model", answer)
 
         keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("📥 Download Notes as PDF", callback_data=f"gen_pdf_{message.id}")]])
-
-                final_reply = (
+        
+        final_reply = (
             f"📖 **Detailed Explanation ({u['subject']})**\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"{answer}\n"
@@ -111,11 +111,8 @@ async def smart_solver(client, message):
             f"👨‍💻 *Engineered by Aditya*\n"
             f"📸 [Follow me on Instagram](https://www.instagram.com/aadit_paswan.007)"
         )
-        
         await processing_msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
         
-        
-        await processing_msg.edit_text(final_reply, reply_markup=keyboard)
     except Exception as e:
         await processing_msg.edit_text(f"⚠️ *System Error:* `{str(e)}`")
         
