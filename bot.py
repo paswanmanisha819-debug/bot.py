@@ -138,7 +138,7 @@ async def handle_pdf_generation(client, cb):
         if pdf_path: safe_cleanup(pdf_path)
 
 
-# --- 4. ADVANCED VISION HANDLER (With Insta Link) ---
+# --- 4. ADVANCED VISION HANDLER (Elite UI & Insta Link) ---
 @app.on_message(filters.photo)
 async def vision_handler(client, message):
     msg = await message.reply_text("👁️ *Processing image through Vision AI...* ⏳")
@@ -149,21 +149,29 @@ async def vision_handler(client, message):
             base64_image = base64.b64encode(image_file.read()).decode('utf-8')
 
         user_q = message.caption if message.caption else "Analyze this educational image and explain its core concepts in detail."
+        
+        # 🌟 विज़न के लिए भी एकदम ChatGPT स्टाइल वाला तगड़ा प्रॉम्प्ट
         ai_prompt = (
-            f"Respond STRICTLY in English. Provide a highly structured explanation. "
-            f"Do NOT use markdown headers like #. Use **bold text** for headings and use bullet points. "
-            f"Question: {user_q}"
+            f"You are an Elite AI Study Companion. "
+            f"Analyze this image and answer the user's query: '{user_q}'. "
+            f"CRITICAL FORMATTING RULES: "
+            f"1. DO NOT use markdown headers (#, ##, ###). Use **bold text** with emojis for headings. "
+            f"2. BULLET POINTS: Use standard bullets '•' or '✅', NEVER use '*'. "
+            f"3. HIGHLIGHTING: **bold** the most important keywords and definitions. "
+            f"4. SPACING: Add a clear blank line between every paragraph and section for a clean UI. "
+            f"5. CONCLUSION: Always end with a beautifully formatted '💡 Quick Summary:' section."
         )
 
         chat_completion = groq_client.chat.completions.create(
             messages=[{"role": "user", "content": [{"type": "text", "text": ai_prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}],
             model="meta-llama/llama-4-scout-17b-16e-instruct"
         )
-        answer = chat_completion.choices[0].message.content.replace("### ", "🔹 ").replace("## ", "🔸 ")
+        
+        # एक्स्ट्रा कचरा साफ़ करने का कोड
+        answer = chat_completion.choices[0].message.content.replace("### ", "").replace("## ", "").replace("# ", "")
         
         keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🧠 Generate Quick Quiz from Image", callback_data=f"imgquiz_{message.id}")]])
         
-        # 📸 यहाँ भी लगा दिया तुम्हारा इंस्टा लिंक
         final_reply = (
             f"🖼️ **Visual Analysis Report**\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
@@ -177,7 +185,7 @@ async def vision_handler(client, message):
         await msg.edit_text(f"⚠️ *Vision Error:* `{str(e)}`")
     finally:
         if image_path and os.path.exists(image_path): os.remove(image_path)
-
+            
 
 # --- 5. IMAGE QUIZ CALLBACK (With Insta Link) ---
 @app.on_callback_query(filters.regex(r"^imgquiz_"))
