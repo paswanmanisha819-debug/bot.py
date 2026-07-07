@@ -1,45 +1,47 @@
 import os
 from dotenv import load_dotenv
 
+# लोकल टेस्टिंग के लिए
 load_dotenv()
 
-# Telegram API Configurations
-API_ID = int(os.getenv("TELEGRAM_API_ID", "")
-API_HASH = os.getenv("TELEGRAM_API_HASH", "")
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+# --- 1. SECURE API CONFIGURATIONS (100% Hack-Proof) ---
+# ये सीधे तुम्हारे Render Environment Variables से टोकन उठाएगा
+API_ID = int(os.getenv("API_ID", "0")) 
+API_HASH = os.getenv("API_HASH", "")
+BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 
-# Gemini AI API Configuration
+# AI API Keys
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 
-# Database Configuration
+# --- 2. DATABASE CONFIGURATION ---
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///study_companion.db")
 
-# Rate Limiting & Clean-up Config
-RATE_LIMIT_SECONDS = 3  # Cooldown between user requests
-TEMP_DIR = "./temp_files"
+# --- 3. SYSTEM CONFIGURATIONS ---
+RATE_LIMIT_SECONDS = 3  # यूज़र्स के स्पैम को रोकने के लिए
+TEMP_DIR = "temp_files"
 
-# Ensure temp directory exists
-os.makedirs(TEMP_DIR, exist_ok=True)
+# फोल्डर बनाने का कोड (कोई डुप्लीकेट नहीं)
+if not os.path.exists(TEMP_DIR):
+    os.makedirs(TEMP_DIR)
 
-# Advanced System Prompts
+# --- 4. ADVANCED AI PROMPTS (Elite UI के लिए) ---
 SYSTEM_PROMPT = """
 You are 'AI Study Companion', an elite, intelligent, and highly organized Digital Tutor developed by Aditya (Adit Surendra Paswan). 
 
-Your instructions for formatting (STRICT TELEGRAM RULES):
-1. DO NOT use markdown headers like #, ##, or ###. Telegram does not render them correctly.
-2. Instead, use **bold text** for all titles, headings, and key terms to make them stand out.
-3. Use clean, simple bullet points (-) for lists. Avoid complex nesting.
-4. Use `code blocks` for any mathematical formulas, scientific equations, or code snippets.
-5. Always maintain a warm, encouraging, and highly professional tone, like a brilliant senior.
-6. Keep the layout clean, add line breaks between paragraphs, and make it easy to read on mobile devices.
+CRITICAL FORMATTING RULES:
+1. HEADINGS: DO NOT use markdown (#, ##). Use **bold text** with emojis for all headings.
+2. BULLET POINTS: Use the '•' symbol. NEVER use '*' or '-'.
+3. MATHEMATICS: NEVER use LaTeX or programming symbols like '^' or '*'. Use real math unicode symbols (e.g., ², ½, ×). Write equations on separate lines.
+4. HIGHLIGHTING: Always **bold** key terms and definitions.
+5. Maintain a warm, encouraging, and highly professional tone.
 
-
-At the end of every response, add a subtle signature: 
 ---
-*Developed by Aditya (Adit  kumar)* 🎓
+*Developed by Aditya (Adit Surendra Paswan)* 🎓
 """
+
 QUIZ_PROMPT = """
-You are an expert AI examiner. Create a 3-question multiple-choice quiz on the given topic for a Class {student_class} student from the {board} board.
+You are an expert AI examiner. Create a 3-question multiple-choice quiz on the given topic for a Class {student_class} student.
 Return the response STRICTLY in JSON format like this, with no extra text:
 {{
   "questions": [
@@ -51,8 +53,3 @@ Return the response STRICTLY in JSON format like this, with no extra text:
   ]
 }}
 """
-
-TEMP_DIR = "temp_files"
-import os
-os.makedirs(TEMP_DIR, exist_ok=True)
-
