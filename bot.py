@@ -443,17 +443,55 @@ async def advanced_question_handler(client_bot, message):
     except Exception as e:
         await msg.edit_text(f"⚠️ *API Error (Screenshot भेजो):*\n`{str(e)}`")
 
-# --- 1. IMAGE VISION (इमेज स्कैनिंग) ---
+# --- ADVANCED IMAGE VISION HANDLER ---
 @app.on_message(filters.photo)
 async def vision_handler(client_bot, message):
-    msg = await message.reply_text("👁️ Analyzing image... Please wait!")
+    msg = await message.reply_text("🔍 *Image Scan in Progress...* ⏳")
+    image_path = None
+    
     try:
-        # फोटो डाउनलोड करो
-        file = await message.download()
-        # यहाँ Groq का Vision मॉडल यूज़ होगा
-        await msg.edit_text("✅ *Image Analyzed!* (इस फीचर के लिए Groq Vision मॉडल सेटअप करना होगा)")
+        # 1. टेलीग्राम से इमेज डाउनलोड करें
+        image_path = await message.download()
+        
+        # 2. इमेज को एन्कोड (Encode) करें (vision मॉडल के लिए ज़रूरी)
+        import base64
+        with open(image_path, "rb") as image_file:
+            base64_image = base64.b64encode(image_file.read()).decode('utf-8')
+
+        # 3. Groq के 'llama-3.2-90b-vision' मॉडल का इस्तेमाल
+        # यह फोटो को पढ़कर उसका जवाब देगा
+        chat_completion = client.chat.completions.create(
+            messages=[{
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "Analyze this image for a student and answer any questions related to it. If it's a diagram, explain it clearly."},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
+                ]
+            }],
+            model="llama-3.2-90b-vision-preview", # यह मॉडल इमेज पढ़ने के लिए बेस्ट है
+        )
+        
+        answer = chat_completion.choices[0].message.content
+        
+        # 4. प्रीमियम रिप्लाई UI
+        advanced_reply = (
+            f"🖼️ *Image Analysis Report*\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"{answer}\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"👨‍💻 *Developed by Aditya*"
+        )
+        
+        await msg.edit_text(advanced_reply)
+        
     except Exception as e:
-        await msg.edit_text(f"⚠️ Error: {str(e)}")
+        await msg.edit_text(f"⚠️ *Vision Error:* `{str(e)}`")
+        
+    finally:
+        # 5. मेमोरी खाली करें
+        if image_path and os.path.exists(image_path):
+            os.remove(image_path)
+        
 
 # --- 2. VOICE NOTE (वॉइस टू टेक्स्ट) ---
 @app.on_message(filters.voice)
