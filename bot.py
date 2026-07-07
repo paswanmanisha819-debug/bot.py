@@ -71,7 +71,7 @@ async def save_profile(client, cb):
     await cb.message.edit_text(success_msg)
 
 
-# --- 2. ADVANCED TEXT SOLVER (With Auto-Play YouTube Scraper & Elite UI) ---
+# --- 2. ADVANCED TEXT SOLVER (Short Videos & Flawless UI) ---
 @app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space"]))
 async def smart_solver(client, message):
     uid = message.from_user.id
@@ -82,14 +82,15 @@ async def smart_solver(client, message):
     processing_msg = await message.reply("🔍 *Analyzing your query like a Pro...* ⏳")
     
     try:
+        # 🌟 100% STRICT BULLETPROOF SYSTEM PROMPT 🌟
         sys_prompt = (
             f"You are an Elite AI Study Companion developed by Aditya. "
             f"Provide a highly accurate, structured answer for a {u['class']}th grade {u['subject']} CBSE student. "
             f"CRITICAL FORMATTING RULES: "
             f"1. HEADINGS: DO NOT use markdown (#, ##). Use **bold text** with emojis for all headings and subheadings. "
-            f"2. BULLET POINTS: Use standard bullets '•' or '✅'. NEVER use '*' or '-'. "
-            f"3. HIGHLIGHTING: Always **bold** key terms, definitions, and important words inside paragraphs. "
-            f"4. MATHEMATICS & FORMULAS (STRICT): "
+            f"2. BULLET POINTS: You MUST use the '•' symbol for lists. ABSOLUTELY NEVER use '*' or '-' for bullet points. "
+            f"3. HIGHLIGHTING: Always **bold** key terms and definitions. "
+            f"4. MATHEMATICS & FORMULAS: "
             f"   - Keep formulas strictly at a {u['class']}th-grade level. NEVER use advanced notations like Delta (Δ) or LaTeX. "
             f"   - NEVER use programming symbols like '^' or '*'. Use real math unicode symbols (e.g., ², ½, ×, ÷). "
             f"   - ALWAYS write the name of the formula in **bold** before writing it (e.g., **Formula for Speed:**). "
@@ -101,33 +102,31 @@ async def smart_solver(client, message):
         chat_completion = groq_client.chat.completions.create(
             messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": message.text}],
             model="llama-3.3-70b-versatile",
-            temperature=0.2 
+            temperature=0.15 # AI को अपनी मर्जी चलाने से रोकने के लिए इसे और भी कम कर दिया है
         )
         
+        # सिर्फ फालतू के हैशटैग हटाएंगे, * वाले रिप्लेसमेंट को हटा दिया ताकि **bold** खराब ना हो
         answer = chat_completion.choices[0].message.content.replace("### ", "").replace("## ", "").replace("# ", "")
-        answer = answer.replace("* ", "• ") 
         
         await db.log_conversation(uid, "user", message.text)
         await db.log_conversation(uid, "model", answer)
 
-        # 🎬 MAGIC YOUTUBE AUTO-SCRAPER (Direct Video Link)
-        search_query = f"{message.text} class {u['class']} {u['subject']} explanation in hindi"
+        # 🎬 MAGIC YOUTUBE AUTO-SCRAPER (Short Videos Only)
+        # 'under 5 minutes' और 'short explanation' जोड़ने से लंबे लेक्चर नहीं आएंगे
+        search_query = f"{message.text} short explanation class {u['class']} {u['subject']} in hindi under 5 minutes"
         
         def get_direct_video(query):
             import urllib.request, urllib.parse, re
             try:
                 url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}"
-                # यूट्यूब पेज का बैकग्राउंड डेटा रीड करना
                 html = urllib.request.urlopen(url).read().decode()
-                # टॉप वीडियो का ID खोजना
                 video_ids = re.findall(r'"videoId":"([a-zA-Z0-9_-]{11})"', html)
                 if video_ids:
-                    return f"https://www.youtube.com/watch?v={video_ids[0]}" # डायरेक्ट प्ले लिंक!
+                    return f"https://www.youtube.com/watch?v={video_ids[0]}"
             except Exception:
                 pass
-            return f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}" # अगर फेल हुआ तो पुराना सर्च लिंक
+            return f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}"
 
-        # यह कोड बिना बोट को हैंग किए बैकग्राउंड में यूट्यूब लिंक लाएगा
         youtube_link = await asyncio.to_thread(get_direct_video, search_query)
 
         # 🔘 SIDE-BY-SIDE BUTTONS
@@ -149,6 +148,7 @@ async def smart_solver(client, message):
         await processing_msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
     except Exception as e:
         await processing_msg.edit_text(f"⚠️ *System Error:* `{str(e)}`")
+    
     
         
 
