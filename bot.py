@@ -222,47 +222,67 @@ async def handle_photo_doubt(client: Client, message: Message):
         safe_cleanup(local_img_path)
 
 # ----------------- VOICE PIPELINE HANDLING -----------------
-@app.on_message(filters.voice & filters.private & rate_limiter())
-async def handle_voice_doubt(client: Client, message: Message):
-    user_id = message.from_user.id
-    user_data = await db.get_user(user_id)
-
-    processing_msg = await message.reply_text("ðŸŽ™ï¸ *Listening closely... Transcribing and formulating solution.*")
-
-    # Download voice path (.ogg format standard across telegram architecture)
-    local_voice_path = await message.download(file_name=os.path.join(TEMP_DIR, f"voice_{user_id}.ogg"))
-
+@app.on_message(filters.voice)
+async def voice_handler(client_bot, message):
+    msg = await message.reply_text("🎧 तुम्हारी आवाज़ सुन रहा हूँ... ⏳")
+    audio_path = None
+    
     try:
-        # Gemini 1.5 natively supports direct parsing of audio data
-        uploaded_audio = await asyncio.to_thread(genai.upload_file, path=local_voice_path, mime_type="audio/ogg")
+        # 1. Telegram से ऑडियो फाइल डाउनलोड करना
+        audio_path = await message.download()
+        
+        # 2. Groq Whisper API से आवाज़ को टेक्स्ट में बदलना
+        with open(audio_path, "rb") as file:
+            transcription = client.audio.transcriptions.create(
+              file=(audio_path, file.read()), # फाइल को रीड करके भेजना
+              model="whisper-large-v3",       # Groq का ऑडियो मॉडल
+              response_format="text"
+            )
+        
+        user_question = transcription.strip()
+        
+        # अगर आवाज़ खाली हो या शोर हो
+        if not user_question:
+            await msg.edit_text("⚠️ मुझे कुछ सुनाई नहीं दिया। कृपया थोड़ा तेज़ बोलें!")
+            return
 
-        composed_query = [
-            f"Listen to this student's query. They are in Class {user_data.student_class} ({user_data.board} Board). Provide a fully structured breakdown.",
-            uploaded_audio
-        ]
-
-        response = await asyncio.to_thread(flash_model.generate_content, composed_query)
-        ai_response = response.text
-
-        await db.log_conversation(user_id, "user", "[Sent Voice Doubt]")
-        await db.log_conversation(user_id, "model", ai_response)
-
-        keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("ðŸ“¥ Download Notes as PDF", callback_data=f"gen_pdf_{message.id}")]
-        ])
-
-        await processing_msg.delete()
-        await message.reply_text(ai_response, reply_markup=keyboard, parse_mode=ParseMode.MARKDOWN)
-
-
-        # Clean up Gemini system file manager cloud storage record
-        await asyncio.to_thread(uploaded_audio.delete)
-
+        await msg.edit_text(f"🗣️ *तुम्हारा सवाल:* {user_question}\n\n🧠 जवाब ढूँढ रहा हूँ...")
+        
+        # 3. LLaMA मॉडल से जवाब मंगाना (तुम्हारे डेवलपर टैग के साथ)
+        system_instruction = (
+            "You are a highly advanced AI Study Companion. "
+            "You were created and developed by a brilliant developer named Aditya."
+        )
+        
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": system_instruction},
+                {"role": "user", "content": user_question}
+            ],
+            model="llama-3.1-8b-instant",
+        )
+        answer = chat_completion.choices[0].message.content
+        
+        # 4. फाइनल शानदार रिप्लाई
+        advanced_reply = (
+            f"🗣️ *सवाल:* {user_question}\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"{answer}\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"👨‍💻 *Developed by Aditya*"
+        )
+        
+        await msg.edit_text(advanced_reply)
+        
     except Exception as e:
-        await processing_msg.edit_text("âŒ Audio processing failed. Please talk clearly or type out your doubt instead.")
+        # असली एरर देखने के लिए
+        await msg.edit_text(f"⚠️ Audio Error: `{str(e)}`")
+        
     finally:
-        safe_cleanup(local_voice_path)
-
+        # 5. मेमोरी बचाने के लिए ऑडियो फाइल को सर्वर से डिलीट करना
+        if audio_path and os.path.exists(audio_path):
+            os.remove(audio_path)
+    
 # ----------------- DYNAMIC QUIZ GENERATOR -----------------
 @app.on_message(filters.command("quiz") & filters.private)
 async def generate_quiz_command(client: Client, message: Message):
