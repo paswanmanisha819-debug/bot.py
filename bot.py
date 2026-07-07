@@ -44,7 +44,7 @@ async def setup_profile(client, message):
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("🎓 9th Grade", callback_data="setclass_9"), InlineKeyboardButton("🎓 10th Grade", callback_data="setclass_10")],
         [InlineKeyboardButton("🎓 11th Grade", callback_data="setclass_11"), InlineKeyboardButton("🎓 12th Grade", callback_data="setclass_12")],
-        [InlineKeyboardButton("🎓 CBSE Exam Mode", callback_data="exam_mode")]  # <--- यह लाइन यहाँ जोड़नी है
+        [InlineKeyboardButton("🎓 CBSE Exam Mode", callback_data="exam_mode")] # <--- यह लाइन यहाँ जोड़ना जरूरी है
     ])
     welcome_text = (
         "🤖 **Welcome to the Elite AI Study Companion!**\n\n"
@@ -52,7 +52,7 @@ async def setup_profile(client, message):
         "please select your current academic grade below:"
     )
     await message.reply_text(welcome_text, reply_markup=keyboard)
-
+    
 @app.on_callback_query(filters.regex(r"^setclass_"))
 async def select_sub(client, cb):
     grade = cb.data.split("_")[1]
