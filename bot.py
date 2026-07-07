@@ -84,7 +84,7 @@ async def save_profile(client, cb):
     )
     await cb.message.edit_text(success_msg)
 
-# --- 2. ADVANCED TEXT SOLVER (Full Final & Secure Update) ---
+# --- 2. ADVANCED TEXT SOLVER (Ultra-Elite UI Upgrade) ---
 @app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space"]))
 async def smart_solver(client, message):
     uid = message.from_user.id
@@ -95,17 +95,18 @@ async def smart_solver(client, message):
     processing_msg = await message.reply("🔍 *Analyzing your query like a Pro...* ⏳")
     
     try:
-        # Groq Client Initialization
         from groq import Groq
         groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
-        # Strict System Prompt: English Only
+        # एकदम तगड़ा और क्लीन UI प्रॉम्प्ट
         sys_prompt = (
-            f"You are an Elite AI Study Companion developed by Aditya. "
-            f"Provide a highly accurate, structured answer for a {u['class']}th grade {u['subject']} CBSE student. "
-            f"!!! MANDATORY: Respond EXCLUSIVELY in Professional English. "
-            f"Do not use markdown symbols like #, /, or brackets. Use bold (**) for headings and bullet points (•) only. !!! "
-            f"Provide a '**💡 Quick Summary:**' at the end."
+            f"You are an Elite AI Study Companion. Provide a high-quality explanation for a {u['class']}th grade {u['subject']} student. "
+            f"CRITICAL RULES: "
+            f"1. Use **bold emojis** and clean headers for sections. "
+            f"2. Use '•' for all bullet points. "
+            f"3. Use a clear, logical structure. "
+            f"4. ABSOLUTELY NO Hindi text, use professional English only. "
+            f"5. End with a bold '💡 Quick Summary' section."
         )
         
         chat_completion = groq_client.chat.completions.create(
@@ -114,24 +115,23 @@ async def smart_solver(client, message):
             temperature=0.1
         )
         
-        raw_answer = chat_completion.choices[0].message.content
-        # Sanitization: Clean up any remaining symbols
-        clean_answer = raw_answer.replace("#", "").replace("/", "").replace("[", "").replace("]", "").replace("*", "")
+        clean_answer = chat_completion.choices[0].message.content
         
-        # YouTube Scraper Call (Uses the external get_direct_video function)
-        search_query = f"{message.text} class {u['class']} CBSE {u['subject']} explanation in hindi -shorts -animation"
+        # YouTube Call
+        search_query = f"{message.text} class {u['class']} CBSE {u['subject']} explanation -shorts -animation"
         youtube_link = await asyncio.to_thread(get_direct_video, search_query)
         
-        # Inline Buttons
+        # एकदम तगड़े बटन
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("▶️ Watch Video", url=youtube_link),
-             InlineKeyboardButton("📥 PDF Notes", callback_data=f"gen_pdf_{message.id}")]
+            [InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link),
+             InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")]
         ])
         
+        # एकदम क्लीन और प्रीमियम रिप्लाई फॉर्मेट
         final_reply = (
-            f"📖 **Detailed Explanation ({u['subject']})**\n"
-            f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"{clean_answer}\n"
+            f"📖 **STUDY COMPANION: {u['subject'].upper()}**\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"{clean_answer}\n\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"👨‍💻 *Engineered by Aditya*\n"
             f"📸 [Follow me on Instagram](https://www.instagram.com/aadit_paswan.007)"
@@ -141,6 +141,7 @@ async def smart_solver(client, message):
         
     except Exception as e:
         await processing_msg.edit_text(f"⚠️ *System Error:* `{str(e)}`")
+        
         
  
 
