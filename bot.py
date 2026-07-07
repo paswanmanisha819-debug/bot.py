@@ -113,6 +113,7 @@ async def smart_solver(client, message):
         await processing_msg.edit_text(final_reply, reply_markup=keyboard)
     except Exception as e:
         await processing_msg.edit_text(f"⚠️ *System Error:* `{str(e)}`")
+        
 
 # --- 3. PDF GENERATION (Unchanged & Safe) ---
 @app.on_callback_query(filters.regex(r"^gen_pdf_"))
