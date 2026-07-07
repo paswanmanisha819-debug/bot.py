@@ -110,9 +110,10 @@ async def smart_solver(client, message):
         await db.log_conversation(uid, "user", message.text)
         await db.log_conversation(uid, "model", answer)
 
-        # 🎬 SMART YOUTUBE AUTO-SCRAPER (Quality & Length Filter)
-        # 'best explanation CBSE in hindi' और '-shorts' से कचरा वीडियो हट जाएंगे
-        search_query = f"{message.text} class {u['class']} CBSE {u['subject']} best explanation in hindi -shorts"
+ # 🎬 MAGIC YOUTUBE AUTO-SCRAPER (Pro Hindi-Only Filter)
+# 'explained in hindi', 'board exams', और 'lecture' जैसे कीवर्ड्स से अब सिर्फ पढ़ाने वाले वीडियो ही आएंगे
+search_query = f"{message.text} class {u['class']} {u['subject']} explained in hindi lecture -shorts -animation"
+
         
         def get_direct_video(query):
             import urllib.request, urllib.parse, re
