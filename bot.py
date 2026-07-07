@@ -69,7 +69,7 @@ async def save_profile(client, cb):
     )
     await cb.message.edit_text(success_msg)
 
-# --- 2. ADVANCED TEXT SOLVER (Elite Formatting) ---
+# --- 2. ADVANCED TEXT SOLVER (ChatGPT Premium UI & Math) ---
 @app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space"]))
 async def smart_solver(client, message):
     uid = message.from_user.id
@@ -77,32 +77,38 @@ async def smart_solver(client, message):
         return await message.reply("⚠️ **Please use the `/setup` command first to select your grade and subject.**")
     
     u = user_profiles[uid]
-    processing_msg = await message.reply("🔍 *Analyzing your query in real-time...* ⏳")
+    processing_msg = await message.reply("🔍 *Analyzing your query like a Pro...* ⏳")
     
     try:
-        # 🌟 ELITE SYSTEM PROMPT FOR ADVANCED FORMATTING
+        # 🌟 ELITE CHATGPT-STYLE & MATH-PERFECT SYSTEM PROMPT 🌟
         sys_prompt = (
             f"You are an Elite AI Study Companion developed by Aditya. "
-            f"Provide an outstanding, highly accurate answer for a {u['class']}th grade {u['subject']} CBSE student. "
-            f"CRITICAL RULES: "
-            f"1. ALWAYS reply STRICTLY in professional English. "
-            f"2. Format the response beautifully using bullet points, short paragraphs, and relevant educational emojis (like 🔬, 📊, ⚡). "
-            f"3. Do NOT use markdown headers like # or ###. Use **bold text** for main headings. "
-            f"4. Always conclude the answer with a brief '**Key Takeaway**' or '**Quick Summary**' section."
+            f"Provide a highly accurate, outstanding answer for a {u['class']}th grade {u['subject']} CBSE student. "
+            f"CRITICAL FORMATTING RULES TO MIMIC CHATGPT UI: "
+            f"1. DO NOT use markdown headers (#, ##, ###). Use **bold text** with emojis for headings. "
+            f"2. BULLET POINTS: Use standard bullets '•' or '✅', NEVER use '*'. "
+            f"3. HIGHLIGHTING: **bold** the most important keywords and definitions. "
+            f"4. MATHEMATICS & FORMULAS (STRICT): NEVER use programming symbols like '^' or '*' or '(1/2)'. "
+            f"You MUST use proper Unicode math characters. Use '²' or '³' for powers (e.g., m/s², at²). "
+            f"Use '½' or '¼' for fractions. Use '×' for multiplication (not '*'). "
+            f"Write equations on separate lines so they look like a real math textbook. "
+            f"5. SPACING: Add a clear blank line between every paragraph and section. "
+            f"6. CONCLUSION: Always end with a beautifully formatted '**💡 Quick Summary:**' section."
         )
         
         chat_completion = groq_client.chat.completions.create(
             messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": message.text}],
             model="llama-3.3-70b-versatile"
         )
-        # Extra safety cleanup
-        answer = chat_completion.choices[0].message.content.replace("### ", "🔹 ").replace("## ", "🔸 ").replace("# ", "🎯 ")
+        
+        answer = chat_completion.choices[0].message.content.replace("### ", "").replace("## ", "").replace("# ", "")
         
         await db.log_conversation(uid, "user", message.text)
         await db.log_conversation(uid, "model", answer)
 
         keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("📥 Download Notes as PDF", callback_data=f"gen_pdf_{message.id}")]])
         
+        # 📸 यहाँ है तुम्हारा इंस्टा लिंक
         final_reply = (
             f"📖 **Detailed Explanation ({u['subject']})**\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
@@ -112,7 +118,6 @@ async def smart_solver(client, message):
             f"📸 [Follow me on Instagram](https://www.instagram.com/aadit_paswan.007)"
         )
         await processing_msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
-        
     except Exception as e:
         await processing_msg.edit_text(f"⚠️ *System Error:* `{str(e)}`")
         
@@ -162,53 +167,46 @@ async def vision_handler(client, message):
     finally:
         if image_path and os.path.exists(image_path): os.remove(image_path)
 
-# --- 5. IMAGE QUIZ CALLBACK ---
-@app.on_callback_query(filters.regex(r"^imgquiz_"))
-async def imgquiz_callback(client, cb):
-    await cb.answer("Synthesizing Quiz... 🧠")
-    await cb.message.edit_text("⏳ *Extracting data to formulate a quiz...*")
+# --- 4. ADVANCED VISION HANDLER (With Insta Link) ---
+@app.on_message(filters.photo)
+async def vision_handler(client, message):
+    msg = await message.reply_text("👁️ *Processing image through Vision AI...* ⏳")
+    image_path = None
     try:
-        msg_id = int(cb.data.split("_")[1])
-        orig_msg = await client.get_messages(cb.message.chat.id, msg_id)
-        image_path = await orig_msg.download()
-        
-        with open(image_path, "rb") as f:
-            base64_image = base64.b64encode(f.read()).decode('utf-8')
-            
-        quiz_content = get_ai_generated_quiz_from_image(base64_image)
-        await cb.message.edit_text(f"🧠 **Interactive AI Quiz**\n━━━━━━━━━━━━━━━━━━━━\n{quiz_content}\n━━━━━━━━━━━━━━━━━━━━\n👨‍💻 *Engineered by Aditya*")
-        if os.path.exists(image_path): os.remove(image_path)
-    except Exception as e:
-        await cb.message.edit_text(f"⚠️ *Quiz Engine Error:* `{str(e)}`")
+        image_path = await message.download()
+        with open(image_path, "rb") as image_file:
+            base64_image = base64.b64encode(image_file.read()).decode('utf-8')
 
-# --- 6. VOICE PIPELINE (Strict English) ---
-@app.on_message(filters.voice)
-async def voice_handler(client, message):
-    msg = await message.reply_text("🎧 *Audio received. Transcribing...* ⏳")
-    audio_path = None
-    try:
-        audio_path = await message.download()
-        with open(audio_path, "rb") as file:
-            transcription = groq_client.audio.transcriptions.create(file=(audio_path, file.read()), model="whisper-large-v3", response_format="text")
-        
-        user_question = transcription.strip()
-        if not user_question: return await msg.edit_text("⚠️ **Transcription failed. Please speak clearly.**")
-
-        await msg.edit_text(f"🗣️ *Transcribed Audio:* {user_question}\n\n🧠 *Generating expert response...*")
-        
-        chat_completion = groq_client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": "You are an AI Study Companion developed by Aditya. Answer strictly in professional English using advanced bulleted formatting."}, 
-                {"role": "user", "content": user_question}
-            ],
-            model="llama-3.3-70b-versatile"
+        user_q = message.caption if message.caption else "Analyze this educational image and explain its core concepts in detail."
+        ai_prompt = (
+            f"Respond STRICTLY in English. Provide a highly structured explanation. "
+            f"Do NOT use markdown headers like #. Use **bold text** for headings and use bullet points. "
+            f"Question: {user_q}"
         )
-        answer = chat_completion.choices[0].message.content.replace("### ", "🔹 ")
-        await msg.edit_text(f"🎙️ **Audio Query Answered**\n━━━━━━━━━━━━━━━━━━━━\n**Q:** {user_question}\n\n{answer}\n━━━━━━━━━━━━━━━━━━━━\n👨‍💻 *Engineered by Aditya*")
+
+        chat_completion = groq_client.chat.completions.create(
+            messages=[{"role": "user", "content": [{"type": "text", "text": ai_prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}],
+            model="meta-llama/llama-4-scout-17b-16e-instruct"
+        )
+        answer = chat_completion.choices[0].message.content.replace("### ", "🔹 ").replace("## ", "🔸 ")
+        
+        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🧠 Generate Quick Quiz from Image", callback_data=f"imgquiz_{message.id}")]])
+        
+        # 📸 यहाँ भी लगा दिया तुम्हारा इंस्टा लिंक
+        final_reply = (
+            f"🖼️ **Visual Analysis Report**\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"{answer}\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"👨‍💻 *Engineered by Aditya*\n"
+            f"📸 [Follow me on Instagram](https://www.instagram.com/aadit_paswan.007)"
+        )
+        await msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
     except Exception as e:
-        await msg.edit_text(f"⚠️ Audio Pipeline Error: `{str(e)}`")
+        await msg.edit_text(f"⚠️ *Vision Error:* `{str(e)}`")
     finally:
-        if audio_path and os.path.exists(audio_path): os.remove(audio_path)
+        if image_path and os.path.exists(image_path): os.remove(image_path)
+        
 
 # --- 7. BASIC COMMANDS ---
 @app.on_message(filters.command("owner"))
