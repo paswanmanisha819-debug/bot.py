@@ -419,56 +419,43 @@ async def advanced_question_handler(client_bot, message):
     except Exception as e:
         await msg.edit_text(f"⚠️ *API Error (Screenshot भेजो):*\n`{str(e)}`")
 
-# --- ADVANCED IMAGE VISION HANDLER ---
+# --- ADVANCED IMAGE VISION WITH AUTO QUIZ HANDLER ---
 @app.on_message(filters.photo)
 async def vision_handler(client_bot, message):
-    msg = await message.reply_text("🔍 *Image Scan in Progress...* ⏳")
+    msg = await message.reply_text("🔍 *Scanning Image & Generating Interactive Quiz...* ⏳")
     image_path = None
     
     try:
         # 1. टेलीग्राम से इमेज डाउनलोड करें
         image_path = await message.download()
         
-        # 2. इमेज को एन्कोड (Encode) करें (vision मॉडल के लिए ज़रूरी)
+        # 2. इमेज को एन्कोड (Encode) करें
         import base64
         with open(image_path, "rb") as image_file:
             base64_image = base64.b64encode(image_file.read()).decode('utf-8')
 
-        # 3. Groq के 'llama-3.2-90b-vision' मॉडल का इस्तेमाल
-        # यह फोटो को पढ़कर उसका जवाब देगा
-        chat_completion = client.chat.completions.create(
-            messages=[{
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": "Analyze this image for a student and answer any questions related to it. If it's a diagram, explain it clearly."},
-                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
-                ]
-            }],
-            model="meta-llama/llama-4-scout-17b-16e-instruct", # यह मॉडल इमेज पढ़ने के लिए बेस्ट है
-        )
+        # 3. नया Llama 4 Scout मॉडल यूज़ करके क्विज़ जनरेट करना
+        quiz_content = get_ai_generated_quiz_from_image(base64_image)
         
-        answer = chat_completion.choices[0].message.content
-        
-        # 4. प्रीमियम रिप्लाई UI
+        # 4. प्रीमियम रिप्लाई UI डिज़ाइन
         advanced_reply = (
-            f"🖼️ *Image Analysis Report*\n"
+            f"🧠 **Image-Based AI Quiz**\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"{answer}\n"
+            f"{quiz_content}\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"👨‍💻 *Developed by Aditya*"
         )
         
         await msg.edit_text(advanced_reply)
-
+        
     except Exception as e:
-        await msg.edit_text(f"⚠️ *असली API एरर:* `{str(e)}`")
-
-    
+        await msg.edit_text(f"⚠️ *Vision Quiz Error:* `{str(e)}`")
         
     finally:
-        # 5. मेमोरी खाली करें
+        # 5. मेमोरी खाली करें ताकि सर्वर क्रैश न हो
         if image_path and os.path.exists(image_path):
             os.remove(image_path)
+            
         
 
 # --- 2. VOICE NOTE (वॉइस टू टेक्स्ट) ---
