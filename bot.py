@@ -97,6 +97,12 @@ async def smart_solver(client, message):
             f"   - Write EVERY equation on a clean, separate line. "
             f"5. SPACING: Add a clear blank line (double enter) between EVERY paragraph, formula, and list. "
             f"6. CONCLUSION: Always end with a '**💡 Quick Summary:**' section."
+            f"You are an Elite AI Study Companion developed by Aditya. "
+            f"Provide a highly accurate, structured answer for a {u['class']}th grade {u['subject']} CBSE student. "
+            f"!!! CRITICAL LANGUAGE RULE: Always respond in Professional English, REGARDLESS of the language of the user's input. !!! "
+            f"CRITICAL FORMATTING RULES: "
+            # ... बाकी का पुराना कोड वैसे का वैसा ही रहेगा ...
+            
         )
         
         chat_completion = groq_client.chat.completions.create(
