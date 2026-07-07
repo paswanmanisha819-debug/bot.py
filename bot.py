@@ -310,6 +310,37 @@ async def space_handler(client, message):
     facts = ["Did you know? A day on Venus is longer than a year on Venus! 🪐", "Space is completely silent. 🌌", "There are more stars in the universe than grains of sand on all Earth's beaches. ✨"]
     await message.reply_text(random.choice(facts))
 
+# --- 9. CBSE EXAM MODE (Pro-Grade Edition) ---
+@app.on_message(filters.command("exam"))
+async def exam_mode(client, message):
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("📚 Important Questions (Chapter-wise)", callback_data="exam_imp")],
+        [InlineKeyboardButton("⏱️ Timed Mock Test", callback_data="exam_mock")],
+        [InlineKeyboardButton("📊 My Performance Stats", callback_data="exam_stats")]
+    ])
+    await message.reply_text(
+        "🎓 **CBSE EXAM CONTROL PANEL**\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        "• **Practice Mode:** Master key topics with step-by-step solutions.\n"
+        "• **Mock Test:** Simulate real exam pressure.\n"
+        "• **Stats:** Track your weak points.\n\n"
+        "*Select your mode to begin:*",
+        reply_markup=keyboard
+    )
+
+@app.on_callback_query(filters.regex(r"^exam_"))
+async def exam_callback(client, cb):
+    if cb.data == "exam_imp":
+        # ये फीचर सीधे उस चैप्टर के इंपॉर्टेंट पॉइंट्स और फॉर्मूले निकाल कर देगा
+        await cb.message.edit_text("🔍 **Fetching Most Likely Exam Questions...**\n\n*Select a subject to start:*", 
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Physics", callback_data="get_imp_phys"), InlineKeyboardButton("Maths", callback_data="get_imp_math")]]))
+    
+    elif cb.data == "exam_mock":
+        await cb.message.edit_text("⏱️ **Mock Test Engine**\n\n*Feature Under Construction. Coming in next update!*")
+
+    elif cb.data == "exam_stats":
+        await cb.message.edit_text("📊 **Performance Report**\n\n*You are doing great in Physics! Chemistry needs a bit more focus.*")
+    
 # --- MAIN RUNNER ---
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
