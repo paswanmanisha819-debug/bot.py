@@ -244,7 +244,7 @@ async def imgquiz_callback(client, cb):
     except Exception as e:
         await cb.message.edit_text(f"⚠️ *Quiz Engine Error:* `{str(e)}`")
 
-# --- 6. VOICE PIPELINE (100% Elite, Math Fix & Insta Link) ---
+# --- 6. VOICE PIPELINE (Clean UI Update) ---
 @app.on_message(filters.voice)
 async def voice_handler(client, message):
     msg = await message.reply_text("🎧 *Audio received. Transcribing...* ⏳")
@@ -259,13 +259,15 @@ async def voice_handler(client, message):
 
         await msg.edit_text(f"🗣️ *Transcribed Audio:* {user_question}\n\n🧠 *Generating expert response...* ⏳")
         
+        # 🌟 STRICT BULLET-POINT PROMPT FOR VOICE 🌟
         sys_prompt = (
-            "You are an Elite AI Study Companion developed by Aditya. "
-            "Answer strictly in professional English. "
-            "1. DO NOT use markdown headers (#, ##, ###). Use bold text with emojis for headings. "
-            "2. BULLET POINTS: Use standard bullets '•' or '✅', NEVER use '*'. "
-            "3. MATHEMATICS: NEVER use programming symbols like '^' or '*'. Use proper Unicode math characters (e.g., ², ½, ×). "
-            "4. Always end with a beautifully formatted '💡 Quick Summary:' section."
+            "You are an Elite AI Study Companion. Answer strictly in professional English. "
+            "CRITICAL FORMATTING RULES:\n"
+            "1. ZERO FLUFF: Answer directly using ONLY bullet points ('•'). No paragraphs.\n"
+            "2. MATH FORMAT: NEVER use '^' or '*'. Use real Unicode (e.g., ², ³, ×, ÷).\n"
+            "3. SPACING: Add a blank line (double enter) between EVERY bullet point.\n"
+            "4. HEADINGS: Use **Bold Text**. NEVER use markdown headers like # or ##.\n"
+            "5. SUMMARY: End with a '**💡 Quick Summary:**' section."
         )
         
         chat_completion = groq_client.chat.completions.create(
@@ -275,23 +277,26 @@ async def voice_handler(client, message):
             ],
             model="llama-3.3-70b-versatile"
         )
-        answer = chat_completion.choices[0].message.content.replace("### ", "").replace("## ", "").replace("# ", "")
+        
+        # कचरा साफ करने वाला फिल्टर
+        raw_answer = chat_completion.choices[0].message.content
+        clean_answer = raw_answer.replace("###", "").replace("##", "").replace("#", "").replace("`", "")
         
         final_reply = (
-            f"🎙️ **Audio Query Answered**\n"
+            f"🎙️ **AUDIO QUERY ANSWERED**\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"**Q:** {user_question}\n\n"
-            f"{answer}\n"
+            f"{clean_answer}\n\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"👨‍💻 *Engineered by Aditya*\n"
-            f"📸 [Follow me on Instagram](https://www.instagram.com/aadit_paswan.007)"
+            f"📸 [Follow on Instagram](https://www.instagram.com/aadit_paswan.007)"
         )
         await msg.edit_text(final_reply, disable_web_page_preview=True)
     except Exception as e:
         await msg.edit_text(f"⚠️ Audio Pipeline Error: `{str(e)}`")
     finally:
         if audio_path and os.path.exists(audio_path): os.remove(audio_path)
-            
+    
 
 # --- 7. BASIC COMMANDS ---
 @app.on_message(filters.command("owner"))
