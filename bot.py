@@ -43,7 +43,8 @@ def get_direct_video(query):
 async def setup_profile(client, message):
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("🎓 9th Grade", callback_data="setclass_9"), InlineKeyboardButton("🎓 10th Grade", callback_data="setclass_10")],
-        [InlineKeyboardButton("🎓 11th Grade", callback_data="setclass_11"), InlineKeyboardButton("🎓 12th Grade", callback_data="setclass_12")]
+        [InlineKeyboardButton("🎓 11th Grade", callback_data="setclass_11"), InlineKeyboardButton("🎓 12th Grade", callback_data="setclass_12")],
+        [InlineKeyboardButton("🎓 CBSE Exam Mode", callback_data="exam_mode")]  # <--- यह लाइन यहाँ जोड़नी है
     ])
     welcome_text = (
         "🤖 **Welcome to the Elite AI Study Companion!**\n\n"
