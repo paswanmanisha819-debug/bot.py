@@ -180,32 +180,6 @@ async def set_board_callback(client: Client, callback_query: CallbackQuery):
         await processing_msg.edit_text(f"❌ Error: {str(e)}")
 
 # ----------------- MULTIMODAL INPUTS HANDLING -----------------
-@app.on_message(filters.photo & filters.private & rate_limiter())
-async def handle_photo_doubt(client: Client, message: Message):
-    user_id = message.from_user.id
-    user_data = await db.get_user(user_id)
-
-    processing_msg = await message.reply_text("🔍¸*Scanning Image via Vision Engine... Step-by-step resolution ready ho rahi hai.*")
-
-    # Download Photo safely
-    local_img_path = await message.download(file_name=os.path.join(TEMP_DIR, f"img_{user_id}.jpg"))
-
-    try:
-        from PIL import Image
-        img = Image.open(local_img_path)
-
-        caption = message.caption or "Explain this problem or diagram cleanly."
-        composed_query = [
-            f"You are tutoring a Class {user_data.student_class} ({user_data.board} Board) student. Detail out everything inside this image: {caption}",
-            img
-        ]
-
-        # Employing Gemini 1.5 Pro for rich multi-modal spatial reasoning
-        response = await asyncio.to_thread(pro_model.generate_content, composed_query)
-        ai_response = response.text
-
-        await db.log_conversation(user_id, "user", f"[Sent Photo] {caption}")
-        await db.log_conversation(user_id, "model", ai_response)
 
                 # Actionable inline buttons
         keyboard = InlineKeyboardMarkup([
