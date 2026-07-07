@@ -65,12 +65,7 @@ async def start_command(client_bot, message):
 async def help_doubt_handler(client_bot, callback_query):
     await callback_query.message.edit_text("💡 *Ask your doubt!*\n\nJust type a `` before your question.\nExample: ` What is motion`")
 
-@app.on_callback_query(filters.regex("show_classes"))
-async def show_classes_handler(client_bot, callback_query):
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("9th", callback_data="quiz_9th"), InlineKeyboardButton("10th", callback_data="quiz_10th")],
-        [InlineKeyboardButton("11th", callback_data="quiz_11th"), InlineKeyboardButton("12th", callback_data="quiz_12th")]
-    ])
+
     
     await callback_query.message.edit_text("Select your class for the Quiz:", reply_markup=keyboard)
                               
