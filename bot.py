@@ -486,7 +486,8 @@ async def vision_handler(client_bot, message):
         await msg.edit_text(advanced_reply)
 
     except Exception as e:
-        await msg.edit_text(f"⚠️ *असली API एरर:* `{str(e)}`"
+        await msg.edit_text(f"⚠️ *असली API एरर:* `{str(e)}`")
+
     
         
     finally:
