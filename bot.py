@@ -84,7 +84,7 @@ async def save_profile(client, cb):
     )
     await cb.message.edit_text(success_msg)
 
-# --- 2. ADVANCED TEXT SOLVER (100% ChatGPT UI & Fixed Footer) ---
+# --- 2. ADVANCED TEXT SOLVER (100% Clean UI & Crash-Proof Edition) ---
 @app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space"]))
 async def smart_solver(client, message):
     uid = message.from_user.id
@@ -92,45 +92,48 @@ async def smart_solver(client, message):
         return await message.reply("⚠️ **Please use the `/setup` command first.**")
     
     u = user_profiles[uid]
-    processing_msg = await message.reply("🔍 *Thinking...* ⏳")
+    processing_msg = await message.reply("🔍 *Analyzing your query for a perfect answer...* ⏳")
     
     try:
         from groq import Groq
         groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
-        # 🌟 STRICT CHATGPT UI & STEP-BY-STEP MATH PROMPT 🌟
+        # 🌟 THE ULTIMATE STRICT PROMPT FOR CLEAN UI & MATH 🌟
         sys_prompt = (
-            f"You are an Elite AI Study Companion for a {u['class']}th grade {u['subject']} student. "
+            f"You are an Elite AI Study Companion for a {u['class']}th grade {u['subject']} CBSE student. "
             f"RESPOND IN PROFESSIONAL ENGLISH ONLY. "
-            f"STRICT FORMATTING RULES:\n"
-            f"1. HEADINGS: Mimic ChatGPT. Use **Bold Text** for headings instead of markdown (#, ##).\n"
-            f"2. BULLET POINTS: Use the '•' symbol for lists. Explain concepts cleanly.\n"
-            f"3. MATH & FORMULAS: ALWAYS show step-by-step calculations using bullet points. Do NOT use LaTeX. Write simple text (e.g., F = m × a).\n"
-            f"4. SPACING: Add a blank line (double enter) between EVERY paragraph and heading for a clean layout.\n"
-            f"5. End with a '**💡 Quick Summary:**' section."
+            f"CRITICAL FORMATTING RULES:\n"
+            f"1. ZERO FLUFF: Give direct, to-the-point answers. No long, cluttered paragraphs.\n"
+            f"2. BULLET POINTS ONLY: Use the '•' symbol for all explanations.\n"
+            f"3. SPACING (VITAL): You MUST add a double line break (blank line) between EVERY single bullet point to keep the UI spacious and clean.\n"
+            f"4. MATH & FORMULAS: NEVER use programming symbols like '^', '*', or '/'. You MUST use real Unicode (e.g., ², ³, ⁻¹, ×, ÷). Write formulas cleanly on their own lines (e.g., F = m × a).\n"
+            f"5. HEADINGS: Use **Bold Text** for headings. NEVER use Markdown headers like #, ##, or ###.\n"
+            f"6. SUMMARY: Always end with a short '**💡 Quick Summary:**' section."
         )
         
         chat_completion = groq_client.chat.completions.create(
             messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": message.text}],
             model="llama-3.3-70b-versatile",
-            temperature=0.15
+            temperature=0.1
         )
         
         raw_answer = chat_completion.choices[0].message.content
         
-        # सिर्फ फालतू हैशटैग हटाएंगे, बोल्ड (**) को सेफ रखेंगे
+        # 🧹 CLEANUP: टेलीग्राम UI को खराब करने वाले सारे सिंबल्स को डिलीट करना
+        # (हम ** को नहीं छेड़ रहे हैं ताकि बोल्ड टेक्स्ट काम करता रहे)
         clean_answer = raw_answer.replace("###", "").replace("##", "").replace("#", "").replace("`", "")
         
-        # YouTube Call
+        # 🎬 YouTube Video Scraper Call
         search_query = f"{message.text} class {u['class']} CBSE {u['subject']} explanation -shorts -animation"
         youtube_link = await asyncio.to_thread(get_direct_video, search_query)
         
+        # 🔘 Interactive Buttons
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link),
              InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")]
         ])
         
-        # ⬇️ यहाँ फुटर फिक्स कर दिया गया है (Insta अब नीचे वाली लाइन में है) ⬇️
+        # 📐 PERFECT LAYOUT: हेडर, बॉडी और फुटर एकदम सेट
         final_reply = (
             f"📖 **{u['subject'].upper()} STUDY GUIDE**\n"
             f"━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -140,15 +143,12 @@ async def smart_solver(client, message):
             f"📸 [Follow on Instagram](https://www.instagram.com/aadit_paswan.007)"
         )
         
-        # बिना किसी एक्स्ट्रा ParseMode के, ताकि Telegram खुद उसे सही से रेंडर करे
+        # 🚀 Send the message safely
         await processing_msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
         
     except Exception as e:
         await processing_msg.edit_text(f"⚠️ *System Error:* `{str(e)}`")
-
         
- 
-
 # --- 3. PDF GENERATION (Unchanged & Safe) ---
 @app.on_callback_query(filters.regex(r"^gen_pdf_"))
 async def handle_pdf_generation(client, cb):
