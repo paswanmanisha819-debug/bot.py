@@ -24,6 +24,20 @@ groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 user_profiles = {}
 
+# --- YOUTUBE SCRAPER (This was missing) ---
+def get_direct_video(query):
+    import urllib.request, urllib.parse, re
+    try:
+        url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}&sp=EgIYQA%3D%3D"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        html = urllib.request.urlopen(req).read().decode()
+        video_ids = re.findall(r'"videoId":"([a-zA-Z0-9_-]{11})"', html)
+        if video_ids:
+            return f"https://www.youtube.com/watch?v={video_ids[0]}"
+    except Exception:
+        pass
+    return f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}"
+    
 # --- 1. SMART START & CLASS SETUP (Strict English) ---
 @app.on_message(filters.command(["start", "setup"]))
 async def setup_profile(client, message):
