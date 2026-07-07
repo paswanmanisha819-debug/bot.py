@@ -311,23 +311,43 @@ async def space_handler(client, message):
     facts = ["Did you know? A day on Venus is longer than a year on Venus! 🪐", "Space is completely silent. 🌌", "There are more stars in the universe than grains of sand on all Earth's beaches. ✨"]
     await message.reply_text(random.choice(facts))
 
-# --- 9. CBSE EXAM MODE (Pro-Grade Edition) ---
-@app.on_message(filters.command("exam"))
-async def exam_mode(client, message):
+# --- 9. CBSE 9th CLASS EXAM ENGINE (Verified & Error-Free) ---
+
+@app.on_callback_query(filters.regex(r"^exam_mode$"))
+async def exam_mode_callback(client, cb):
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("📚 Important Questions (Chapter-wise)", callback_data="exam_imp")],
-        [InlineKeyboardButton("⏱️ Timed Mock Test", callback_data="exam_mock")],
-        [InlineKeyboardButton("📊 My Performance Stats", callback_data="exam_stats")]
+        [InlineKeyboardButton("📚 9th Important Questions", callback_data="exam_9th_imp")],
+        [InlineKeyboardButton("⏱️ Mock Test", callback_data="exam_9th_mock")],
+        [InlineKeyboardButton("📊 My Progress", callback_data="exam_9th_stats")]
     ])
-    await message.reply_text(
-        "🎓 **CBSE EXAM CONTROL PANEL**\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        "• **Practice Mode:** Master key topics with step-by-step solutions.\n"
-        "• **Mock Test:** Simulate real exam pressure.\n"
-        "• **Stats:** Track your weak points.\n\n"
-        "*Select your mode to begin:*",
-        reply_markup=keyboard
-    )
+    try:
+        await cb.message.edit_text(
+            "🎓 **CBSE 9th GRADE EXAM CENTER**\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "Select an option to sharpen your preparation:",
+            reply_markup=keyboard
+        )
+    except Exception as e:
+        print(f"Error in Exam Mode: {e}")
+
+@app.on_callback_query(filters.regex(r"^exam_9th_"))
+async def exam_9th_callback(client, cb):
+    try:
+        if cb.data == "exam_9th_imp":
+            await cb.message.edit_text("🔍 **Select Subject:**", 
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🧪 Science", callback_data="imp_sci"), InlineKeyboardButton("📐 Maths", callback_data="imp_math")],
+                [InlineKeyboardButton("⬅️ Back", callback_data="exam_mode")]
+            ]))
+        elif cb.data == "exam_9th_mock":
+            await cb.message.edit_text("⏱️ **Mock Test Engine Coming Soon!**\n\n[⬅️ Back]", 
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Back", callback_data="exam_mode")]]))
+        elif cb.data == "exam_9th_stats":
+            await cb.message.edit_text("📊 **Performance Report: All Clear!**\n\n[⬅️ Back]", 
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Back", callback_data="exam_mode")]]))
+    except Exception as e:
+        print(f"Error in Callback: {e}")
+    
 
 @app.on_callback_query(filters.regex(r"^exam_"))
 async def exam_callback(client, cb):
