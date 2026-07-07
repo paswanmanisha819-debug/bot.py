@@ -70,7 +70,8 @@ async def save_profile(client, cb):
     )
     await cb.message.edit_text(success_msg)
 
-# --- 2. ADVANCED TEXT SOLVER (100% Elite UI, Strict Math & Side-by-Side Buttons) ---
+
+# --- 2. ADVANCED TEXT SOLVER (With Auto-Play YouTube Scraper & Elite UI) ---
 @app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space"]))
 async def smart_solver(client, message):
     uid = message.from_user.id
@@ -81,7 +82,6 @@ async def smart_solver(client, message):
     processing_msg = await message.reply("🔍 *Analyzing your query like a Pro...* ⏳")
     
     try:
-        # 🌟 100% STRICT BULLETPROOF SYSTEM PROMPT 🌟
         sys_prompt = (
             f"You are an Elite AI Study Companion developed by Aditya. "
             f"Provide a highly accurate, structured answer for a {u['class']}th grade {u['subject']} CBSE student. "
@@ -101,22 +101,36 @@ async def smart_solver(client, message):
         chat_completion = groq_client.chat.completions.create(
             messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": message.text}],
             model="llama-3.3-70b-versatile",
-            temperature=0.2 # 👈 Extremely strict adherence to formatting, no extra smartness
+            temperature=0.2 
         )
         
         answer = chat_completion.choices[0].message.content.replace("### ", "").replace("## ", "").replace("# ", "")
-        answer = answer.replace("* ", "• ") # Fallback safety
+        answer = answer.replace("* ", "• ") 
         
         await db.log_conversation(uid, "user", message.text)
         await db.log_conversation(uid, "model", answer)
 
-        # 🎬 SMART YOUTUBE LINK GENERATOR
+        # 🎬 MAGIC YOUTUBE AUTO-SCRAPER (Direct Video Link)
         search_query = f"{message.text} class {u['class']} {u['subject']} explanation in hindi"
-        safe_query = urllib.parse.quote(search_query)
-        youtube_link = f"https://www.youtube.com/results?search_query={safe_query}"
+        
+        def get_direct_video(query):
+            import urllib.request, urllib.parse, re
+            try:
+                url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}"
+                # यूट्यूब पेज का बैकग्राउंड डेटा रीड करना
+                html = urllib.request.urlopen(url).read().decode()
+                # टॉप वीडियो का ID खोजना
+                video_ids = re.findall(r'"videoId":"([a-zA-Z0-9_-]{11})"', html)
+                if video_ids:
+                    return f"https://www.youtube.com/watch?v={video_ids[0]}" # डायरेक्ट प्ले लिंक!
+            except Exception:
+                pass
+            return f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}" # अगर फेल हुआ तो पुराना सर्च लिंक
 
-        # 🔘 SIDE-BY-SIDE BUTTONS FIX (Compact UI)
-        # दोनों बटन्स को एक ही लिस्ट [ ... ] के अंदर रखा है ताकि वो अगल-बगल आएं
+        # यह कोड बिना बोट को हैंग किए बैकग्राउंड में यूट्यूब लिंक लाएगा
+        youtube_link = await asyncio.to_thread(get_direct_video, search_query)
+
+        # 🔘 SIDE-BY-SIDE BUTTONS
         keyboard = InlineKeyboardMarkup([
             [
                 InlineKeyboardButton("▶️ Watch Video", url=youtube_link),
@@ -136,7 +150,6 @@ async def smart_solver(client, message):
     except Exception as e:
         await processing_msg.edit_text(f"⚠️ *System Error:* `{str(e)}`")
     
-            
         
 
 # --- 3. PDF GENERATION (Unchanged & Safe) ---
