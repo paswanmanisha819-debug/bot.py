@@ -444,7 +444,7 @@ async def vision_handler(client_bot, message):
                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
                 ]
             }],
-            model="llama-3.2-90b-vision-preview", # यह मॉडल इमेज पढ़ने के लिए बेस्ट है
+            model="meta-llama/llama-4-scout-17b-16e-instruct", # यह मॉडल इमेज पढ़ने के लिए बेस्ट है
         )
         
         answer = chat_completion.choices[0].message.content
