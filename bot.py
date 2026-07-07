@@ -4,6 +4,7 @@ import json
 import base64
 import random
 from datetime import datetime, timedelta
+import urllib.parse
 
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
@@ -69,7 +70,7 @@ async def save_profile(client, cb):
     )
     await cb.message.edit_text(success_msg)
 
-# --- 2. ADVANCED TEXT SOLVER (ChatGPT Premium UI & Math) ---
+# --- 2. ADVANCED TEXT SOLVER (With YouTube Tutor & PDF) ---
 @app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space"]))
 async def smart_solver(client, message):
     uid = message.from_user.id
@@ -106,9 +107,18 @@ async def smart_solver(client, message):
         await db.log_conversation(uid, "user", message.text)
         await db.log_conversation(uid, "model", answer)
 
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("📥 Download Notes as PDF", callback_data=f"gen_pdf_{message.id}")]])
+        # 🎬 SMART YOUTUBE LINK GENERATOR
+        # यह अपने आप यूजर के सवाल, क्लास और सब्जेक्ट के हिसाब से बेस्ट यूट्यूब सर्च बनाएगा
+        search_query = f"{message.text} class {u['class']} {u['subject']} explanation in hindi"
+        safe_query = urllib.parse.quote(search_query)
+        youtube_link = f"https://www.youtube.com/results?search_query={safe_query}"
+
+        # 🔘 यहाँ हमने YouTube और PDF दोनों बटन एक साथ लगा दिए हैं
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("▶️ Watch Video Explanation", url=youtube_link)],
+            [InlineKeyboardButton("📥 Download Notes as PDF", callback_data=f"gen_pdf_{message.id}")]
+        ])
         
-        # 📸 यहाँ है तुम्हारा इंस्टा लिंक
         final_reply = (
             f"📖 **Detailed Explanation ({u['subject']})**\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
@@ -120,6 +130,7 @@ async def smart_solver(client, message):
         await processing_msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
     except Exception as e:
         await processing_msg.edit_text(f"⚠️ *System Error:* `{str(e)}`")
+            
         
 
 # --- 3. PDF GENERATION (Unchanged & Safe) ---
