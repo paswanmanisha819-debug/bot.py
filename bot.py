@@ -70,7 +70,7 @@ async def save_profile(client, cb):
     )
     await cb.message.edit_text(success_msg)
 
-# --- 2. ADVANCED TEXT SOLVER (With YouTube Tutor & PDF) ---
+# --- 2. ADVANCED TEXT SOLVER (100% Elite UI, Strict Math & Side-by-Side Buttons) ---
 @app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space"]))
 async def smart_solver(client, message):
     uid = message.from_user.id
@@ -81,42 +81,47 @@ async def smart_solver(client, message):
     processing_msg = await message.reply("🔍 *Analyzing your query like a Pro...* ⏳")
     
     try:
-        # 🌟 ELITE CHATGPT-STYLE & MATH-PERFECT SYSTEM PROMPT 🌟
+        # 🌟 100% STRICT BULLETPROOF SYSTEM PROMPT 🌟
         sys_prompt = (
             f"You are an Elite AI Study Companion developed by Aditya. "
-            f"Provide a highly accurate, outstanding answer for a {u['class']}th grade {u['subject']} CBSE student. "
-            f"CRITICAL FORMATTING RULES TO MIMIC CHATGPT UI: "
-            f"1. DO NOT use markdown headers (#, ##, ###). Use **bold text** with emojis for headings. "
-            f"2. BULLET POINTS: Use standard bullets '•' or '✅', NEVER use '*'. "
-            f"3. HIGHLIGHTING: **bold** the most important keywords and definitions. "
-            f"4. MATHEMATICS & FORMULAS (STRICT): NEVER use programming symbols like '^' or '*' or '(1/2)'. "
-            f"You MUST use proper Unicode math characters. Use '²' or '³' for powers (e.g., m/s², at²). "
-            f"Use '½' or '¼' for fractions. Use '×' for multiplication (not '*'). "
-            f"Write equations on separate lines so they look like a real math textbook. "
-            f"5. SPACING: Add a clear blank line between every paragraph and section. "
-            f"6. CONCLUSION: Always end with a beautifully formatted '**💡 Quick Summary:**' section."
+            f"Provide a highly accurate, structured answer for a {u['class']}th grade {u['subject']} CBSE student. "
+            f"CRITICAL FORMATTING RULES: "
+            f"1. HEADINGS: DO NOT use markdown (#, ##). Use **bold text** with emojis for all headings and subheadings. "
+            f"2. BULLET POINTS: Use standard bullets '•' or '✅'. NEVER use '*' or '-'. "
+            f"3. HIGHLIGHTING: Always **bold** key terms, definitions, and important words inside paragraphs. "
+            f"4. MATHEMATICS & FORMULAS (STRICT): "
+            f"   - Keep formulas strictly at a {u['class']}th-grade level. NEVER use advanced notations like Delta (Δ) or LaTeX. "
+            f"   - NEVER use programming symbols like '^' or '*'. Use real math unicode symbols (e.g., ², ½, ×, ÷). "
+            f"   - ALWAYS write the name of the formula in **bold** before writing it (e.g., **Formula for Speed:**). "
+            f"   - Write EVERY equation on a clean, separate line. "
+            f"5. SPACING: Add a clear blank line (double enter) between EVERY paragraph, formula, and list. "
+            f"6. CONCLUSION: Always end with a '**💡 Quick Summary:**' section."
         )
         
         chat_completion = groq_client.chat.completions.create(
             messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": message.text}],
-            model="llama-3.3-70b-versatile"
+            model="llama-3.3-70b-versatile",
+            temperature=0.2 # 👈 Extremely strict adherence to formatting, no extra smartness
         )
         
         answer = chat_completion.choices[0].message.content.replace("### ", "").replace("## ", "").replace("# ", "")
+        answer = answer.replace("* ", "• ") # Fallback safety
         
         await db.log_conversation(uid, "user", message.text)
         await db.log_conversation(uid, "model", answer)
 
         # 🎬 SMART YOUTUBE LINK GENERATOR
-        # यह अपने आप यूजर के सवाल, क्लास और सब्जेक्ट के हिसाब से बेस्ट यूट्यूब सर्च बनाएगा
         search_query = f"{message.text} class {u['class']} {u['subject']} explanation in hindi"
         safe_query = urllib.parse.quote(search_query)
         youtube_link = f"https://www.youtube.com/results?search_query={safe_query}"
 
-        # 🔘 यहाँ हमने YouTube और PDF दोनों बटन एक साथ लगा दिए हैं
+        # 🔘 SIDE-BY-SIDE BUTTONS FIX (Compact UI)
+        # दोनों बटन्स को एक ही लिस्ट [ ... ] के अंदर रखा है ताकि वो अगल-बगल आएं
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("▶️ Watch Video Explanation", url=youtube_link)],
-            [InlineKeyboardButton("📥 Download Notes as PDF", callback_data=f"gen_pdf_{message.id}")]
+            [
+                InlineKeyboardButton("▶️ Watch Video", url=youtube_link),
+                InlineKeyboardButton("📥 PDF Notes", callback_data=f"gen_pdf_{message.id}")
+            ]
         ])
         
         final_reply = (
@@ -130,6 +135,7 @@ async def smart_solver(client, message):
         await processing_msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
     except Exception as e:
         await processing_msg.edit_text(f"⚠️ *System Error:* `{str(e)}`")
+    
             
         
 
