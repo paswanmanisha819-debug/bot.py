@@ -84,7 +84,7 @@ async def save_profile(client, cb):
     )
     await cb.message.edit_text(success_msg)
 
-# --- 2. ADVANCED TEXT SOLVER (100% ChatGPT Style UI) ---
+# --- 2. ADVANCED TEXT SOLVER (100% ChatGPT UI & Fixed Footer) ---
 @app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space"]))
 async def smart_solver(client, message):
     uid = message.from_user.id
@@ -92,23 +92,22 @@ async def smart_solver(client, message):
         return await message.reply("⚠️ **Please use the `/setup` command first.**")
     
     u = user_profiles[uid]
-    processing_msg = await message.reply("🔍 *Analyzing your query like ChatGPT...* ⏳")
+    processing_msg = await message.reply("🔍 *Thinking...* ⏳")
     
     try:
         from groq import Groq
         groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
-        # 🌟 100% CHATGPT STYLE PROMPT 🌟
+        # 🌟 STRICT CHATGPT UI & STEP-BY-STEP MATH PROMPT 🌟
         sys_prompt = (
             f"You are an Elite AI Study Companion for a {u['class']}th grade {u['subject']} student. "
             f"RESPOND IN PROFESSIONAL ENGLISH ONLY. "
-            f"FORMATTING RULES TO MIMIC CHATGPT: "
-            f"1. HEADINGS: Do NOT use markdown headers (#, ##, ###). Use **Bold Text** instead. "
-            f"2. BULLETS: Use the '•' symbol for all lists. "
-            f"3. HIGHLIGHTING: Always **bold** important keywords, terms, and definitions. "
-            f"4. MATH & FORMULAS: NEVER use LaTeX or programming symbols like '^' or '*'. Use real math unicode (e.g., ², ½, ×, ÷). Write formulas on a clean, separate line. "
-            f"5. SPACING: Double space between paragraphs for readability. "
-            f"6. SUMMARY: Always end with a '**💡 Quick Summary:**' section."
+            f"STRICT FORMATTING RULES:\n"
+            f"1. HEADINGS: Mimic ChatGPT. Use **Bold Text** for headings instead of markdown (#, ##).\n"
+            f"2. BULLET POINTS: Use the '•' symbol for lists. Explain concepts cleanly.\n"
+            f"3. MATH & FORMULAS: ALWAYS show step-by-step calculations using bullet points. Do NOT use LaTeX. Write simple text (e.g., F = m × a).\n"
+            f"4. SPACING: Add a blank line (double enter) between EVERY paragraph and heading for a clean layout.\n"
+            f"5. End with a '**💡 Quick Summary:**' section."
         )
         
         chat_completion = groq_client.chat.completions.create(
@@ -119,8 +118,8 @@ async def smart_solver(client, message):
         
         raw_answer = chat_completion.choices[0].message.content
         
-        # ⚠️ सिर्फ फालतू कचरा (##) हटाएंगे, '*' नहीं हटाएंगे वरना बोल्ड काम नहीं करेगा!
-        clean_answer = raw_answer.replace("### ", "").replace("## ", "").replace("# ", "").replace("`", "")
+        # सिर्फ फालतू हैशटैग हटाएंगे, बोल्ड (**) को सेफ रखेंगे
+        clean_answer = raw_answer.replace("###", "").replace("##", "").replace("#", "").replace("`", "")
         
         # YouTube Call
         search_query = f"{message.text} class {u['class']} CBSE {u['subject']} explanation -shorts -animation"
@@ -131,20 +130,22 @@ async def smart_solver(client, message):
              InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")]
         ])
         
+        # ⬇️ यहाँ फुटर फिक्स कर दिया गया है (Insta अब नीचे वाली लाइन में है) ⬇️
         final_reply = (
             f"📖 **{u['subject'].upper()} STUDY GUIDE**\n"
             f"━━━━━━━━━━━━━━━━━━━━\n\n"
             f"{clean_answer}\n\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"👨‍💻 *Engineered by Aditya* | 📸 [Follow on Instagram](https://www.instagram.com/aadit_paswan.007)"
+            f"👨‍💻 *Engineered by Aditya*\n"
+            f"📸 [Follow on Instagram](https://www.instagram.com/aadit_paswan.007)"
         )
         
+        # बिना किसी एक्स्ट्रा ParseMode के, ताकि Telegram खुद उसे सही से रेंडर करे
         await processing_msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
         
     except Exception as e:
         await processing_msg.edit_text(f"⚠️ *System Error:* `{str(e)}`")
-        
-        
+
         
  
 
