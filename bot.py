@@ -1,6 +1,7 @@
 import asyncio
 import os
 import json
+import base64
 
 from datetime import datetime, timedelta
 from features import get_ai_generated_quiz
