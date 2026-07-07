@@ -71,81 +71,61 @@ async def save_profile(client, cb):
     await cb.message.edit_text(success_msg)
 
 
-# --- 2. ADVANCED TEXT SOLVER (Smart YouTube Filter & Flawless UI) ---
+# --- 2. ADVANCED TEXT SOLVER (Final Stable Version) ---
 @app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space"]))
 async def smart_solver(client, message):
     uid = message.from_user.id
     if uid not in user_profiles: 
-        return await message.reply("⚠️ **Please use the `/setup` command first to select your grade and subject.**")
+        return await message.reply("⚠️ **Please use the `/setup` command first.**")
     
     u = user_profiles[uid]
-    processing_msg = await message.reply("🔍 *Analyzing your query like a Pro...* ⏳")
+    processing_msg = await message.reply("🔍 *Analyzing...* ⏳")
     
     try:
-        # 🌟 100% STRICT BULLETPROOF SYSTEM PROMPT 🌟
+        # यह लाइन सबसे जरूरी है: AI से बात करने के लिए क्लाइंट को बुलाना
+        # सुनिश्चित करें कि आपके कोड की शुरुआत में 'from groq import Groq' लिखा है
+        from groq import Groq
+        groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+
         sys_prompt = (
-            f"You are an Elite AI Study Companion developed by Aditya. "
-            f"Provide a highly accurate, structured answer for a {u['class']}th grade {u['subject']} CBSE student. "
-            
-            f"!!! MANDATORY LANGUAGE RULE: You MUST answer EXCLUSIVELY in Professional English. "
-            f"Even if the user asks in Hindi or asks for Hindi terms, you MUST translate everything to English. "
-            f"Do NOT include any Hindi characters, Devanagari script, or mixed-language text. !!! "
-            
-            f"CRITICAL FORMATTING RULES: "
-            f"1. HEADINGS: DO NOT use markdown (#, ##). Use **bold text** with emojis for all headings. "
-            f"2. BULLET POINTS: Use the '•' symbol. NEVER use '*' or '-'. "
-            f"3. MATHEMATICS: NEVER use LaTeX or programming symbols like '^' or '*'. Use real math unicode symbols (e.g., ², ½, ×). "
-            f"4. HIGHLIGHTING: Always **bold** key terms and definitions. "
-            f"5. SPACING: Add a clear blank line between EVERY paragraph. "
-            f"6. CONCLUSION: Always end with a '**💡 Quick Summary:**' section."
+            f"You are an Elite AI Study Companion. Answer in PROFESSIONAL ENGLISH ONLY. "
+            f"Do not use markdown symbols except bold (**). Use bullet points '•' only."
         )
         
+        # अब यह 'chat_completion' एकदम सही काम करेगा
+        chat_completion = groq_client.chat.completions.create(
+            messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": message.text}],
+            model="llama-3.3-70b-versatile",
+            temperature=0.1
+        )
         
-        answer = chat_completion.choices[0].message.content.replace("### ", "").replace("## ", "").replace("# ", "")
+        raw_answer = chat_completion.choices[0].message.content
+        # फालतू के सिंबल्स हटाना
+        clean_answer = raw_answer.replace("#", "").replace("/", "").replace("*", "").replace("[", "").replace("]", "")
         
-        await db.log_conversation(uid, "user", message.text)
-        await db.log_conversation(uid, "model", answer)
-
-        # 🎬 MAGIC YOUTUBE AUTO-SCRAPER (Pro Hindi-Only Filter)
-        search_query = f"{message.text} class {u['class']} {u['subject']} explained in hindi lecture -shorts -animation"
-        
-        def get_direct_video(query):
-            import urllib.request, urllib.parse, re
-            try:
-                url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}&sp=EgIYQA%3D%3D"
-                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-                html = urllib.request.urlopen(req).read().decode()
-                video_ids = re.findall(r'"videoId":"([a-zA-Z0-9_-]{11})"', html)
-                if video_ids:
-                    return f"https://www.youtube.com/watch?v={video_ids[0]}"
-            except Exception:
-                pass
-            return f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}"
-
-        # यहाँ देखो: हमने get_direct_video को यहाँ कॉल किया है
+        # YouTube और PDF बटन्स
+        search_query = f"{message.text} class {u['class']} CBSE explanation in hindi -shorts -animation"
         youtube_link = await asyncio.to_thread(get_direct_video, search_query)
-
-        # 🔘 SIDE-BY-SIDE BUTTONS
+        
         keyboard = InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton("▶️ Watch Video", url=youtube_link),
-                InlineKeyboardButton("📥 PDF Notes", callback_data=f"gen_pdf_{message.id}")
-            ]
+            [InlineKeyboardButton("▶️ Watch Video", url=youtube_link),
+             InlineKeyboardButton("📥 PDF Notes", callback_data=f"gen_pdf_{message.id}")]
         ])
         
         final_reply = (
             f"📖 **Detailed Explanation ({u['subject']})**\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"{answer}\n"
+            f"{clean_answer}\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"👨‍💻 *Engineered by Aditya*\n"
             f"📸 [Follow me on Instagram](https://www.instagram.com/aadit_paswan.007)"
         )
+        
         await processing_msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
-
-    # ⚠️ यह 'except' ब्लॉक यहाँ ज़रूरी है, जो पहले गायब था!
+        
     except Exception as e:
         await processing_msg.edit_text(f"⚠️ *System Error:* `{str(e)}`")
+    
         
  
 
