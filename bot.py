@@ -165,7 +165,7 @@ async def handle_pdf_generation(client, cb):
         if pdf_path: safe_cleanup(pdf_path)
 
 
-# --- 4. ADVANCED VISION HANDLER (Elite UI & Insta Link) ---
+# --- 5. ADVANCED VISION HANDLER (Clean UI Update) ---
 @app.on_message(filters.photo)
 async def vision_handler(client, message):
     msg = await message.reply_text("👁️ *Processing image through Vision AI...* ⏳")
@@ -175,18 +175,18 @@ async def vision_handler(client, message):
         with open(image_path, "rb") as image_file:
             base64_image = base64.b64encode(image_file.read()).decode('utf-8')
 
-        user_q = message.caption if message.caption else "Analyze this educational image and explain its core concepts in detail."
+        user_q = message.caption if message.caption else "Analyze this educational image and explain its core concepts."
         
-        # 🌟 विज़न के लिए भी एकदम ChatGPT स्टाइल वाला तगड़ा प्रॉम्प्ट
+        # 🌟 STRICT BULLET-POINT PROMPT FOR VISION 🌟
         ai_prompt = (
             f"You are an Elite AI Study Companion. "
             f"Analyze this image and answer the user's query: '{user_q}'. "
-            f"CRITICAL FORMATTING RULES: "
-            f"1. DO NOT use markdown headers (#, ##, ###). Use **bold text** with emojis for headings. "
-            f"2. BULLET POINTS: Use standard bullets '•' or '✅', NEVER use '*'. "
-            f"3. HIGHLIGHTING: **bold** the most important keywords and definitions. "
-            f"4. SPACING: Add a clear blank line between every paragraph and section for a clean UI. "
-            f"5. CONCLUSION: Always end with a beautifully formatted '💡 Quick Summary:' section."
+            f"CRITICAL FORMATTING RULES:\n"
+            f"1. ZERO FLUFF: Answer directly using ONLY bullet points ('•'). No long paragraphs.\n"
+            f"2. MATH FORMAT: NEVER use '^' or '*'. Use real Unicode (e.g., ², ³, ×, ÷).\n"
+            f"3. SPACING: Add a blank line (double enter) between EVERY bullet point.\n"
+            f"4. HEADINGS: Use **Bold Text**. NEVER use markdown headers like # or ##.\n"
+            f"5. SUMMARY: End with a '**💡 Quick Summary:**' section."
         )
 
         chat_completion = groq_client.chat.completions.create(
@@ -194,24 +194,26 @@ async def vision_handler(client, message):
             model="meta-llama/llama-4-scout-17b-16e-instruct"
         )
         
-        # एक्स्ट्रा कचरा साफ़ करने का कोड
-        answer = chat_completion.choices[0].message.content.replace("### ", "").replace("## ", "").replace("# ", "")
+        # कचरा साफ करने वाला फिल्टर
+        raw_answer = chat_completion.choices[0].message.content
+        clean_answer = raw_answer.replace("###", "").replace("##", "").replace("#", "").replace("`", "")
         
         keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🧠 Generate Quick Quiz from Image", callback_data=f"imgquiz_{message.id}")]])
         
         final_reply = (
-            f"🖼️ **Visual Analysis Report**\n"
-            f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"{answer}\n"
+            f"🖼️ **VISUAL ANALYSIS REPORT**\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"{clean_answer}\n\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"👨‍💻 *Engineered by Aditya*\n"
-            f"📸 [Follow me on Instagram](https://www.instagram.com/aadit_paswan.007)"
+            f"📸 [Follow on Instagram](https://www.instagram.com/aadit_paswan.007)"
         )
         await msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
     except Exception as e:
         await msg.edit_text(f"⚠️ *Vision Error:* `{str(e)}`")
     finally:
         if image_path and os.path.exists(image_path): os.remove(image_path)
+
             
 
 # --- 5. IMAGE QUIZ CALLBACK (With Insta Link) ---
