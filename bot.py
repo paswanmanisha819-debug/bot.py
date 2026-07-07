@@ -110,21 +110,15 @@ async def smart_solver(client, message):
         await db.log_conversation(uid, "user", message.text)
         await db.log_conversation(uid, "model", answer)
 
- # 🎬 MAGIC YOUTUBE AUTO-SCRAPER (Pro Hindi-Only Filter)
-# 'explained in hindi', 'board exams', और 'lecture' जैसे कीवर्ड्स से अब सिर्फ पढ़ाने वाले वीडियो ही आएंगे
-search_query = f"{message.text} class {u['class']} {u['subject']} explained in hindi lecture -shorts -animation"
-
+        # 🎬 MAGIC YOUTUBE AUTO-SCRAPER (Pro Hindi-Only Filter)
+        search_query = f"{message.text} class {u['class']} {u['subject']} explained in hindi lecture -shorts -animation"
         
         def get_direct_video(query):
             import urllib.request, urllib.parse, re
             try:
-                # &sp=EgIYQA%3D%3D = YouTube Filter for 4 to 20 minutes length only!
                 url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}&sp=EgIYQA%3D%3D"
-                # User-Agent लगाने से YouTube हमारे बोट को ब्लॉक नहीं करेगा
                 req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
                 html = urllib.request.urlopen(req).read().decode()
-                
-                # वीडियो आईडी ढूँढना
                 video_ids = re.findall(r'"videoId":"([a-zA-Z0-9_-]{11})"', html)
                 if video_ids:
                     return f"https://www.youtube.com/watch?v={video_ids[0]}"
@@ -132,6 +126,7 @@ search_query = f"{message.text} class {u['class']} {u['subject']} explained in h
                 pass
             return f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}"
 
+        # यहाँ देखो: हमने get_direct_video को यहाँ कॉल किया है
         youtube_link = await asyncio.to_thread(get_direct_video, search_query)
 
         # 🔘 SIDE-BY-SIDE BUTTONS
@@ -151,12 +146,12 @@ search_query = f"{message.text} class {u['class']} {u['subject']} explained in h
             f"📸 [Follow me on Instagram](https://www.instagram.com/aadit_paswan.007)"
         )
         await processing_msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
+
+    # ⚠️ यह 'except' ब्लॉक यहाँ ज़रूरी है, जो पहले गायब था!
     except Exception as e:
         await processing_msg.edit_text(f"⚠️ *System Error:* `{str(e)}`")
         
-    
-    
-        
+ 
 
 # --- 3. PDF GENERATION (Unchanged & Safe) ---
 @app.on_callback_query(filters.regex(r"^gen_pdf_"))
