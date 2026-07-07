@@ -137,35 +137,6 @@ async def handle_pdf_generation(client, cb):
     finally:
         if pdf_path: safe_cleanup(pdf_path)
 
-# --- 4. ADVANCED VISION HANDLER ---
-@app.on_message(filters.photo)
-async def vision_handler(client, message):
-    msg = await message.reply_text("👁️ *Processing image through Vision AI...* ⏳")
-    image_path = None
-    try:
-        image_path = await message.download()
-        with open(image_path, "rb") as image_file:
-            base64_image = base64.b64encode(image_file.read()).decode('utf-8')
-
-        user_q = message.caption if message.caption else "Analyze this educational image and explain its core concepts in detail."
-        ai_prompt = (
-            f"Respond STRICTLY in English. Provide a highly structured explanation. "
-            f"Do NOT use markdown headers like #. Use **bold text** for headings and use bullet points. "
-            f"Question: {user_q}"
-        )
-
-        chat_completion = groq_client.chat.completions.create(
-            messages=[{"role": "user", "content": [{"type": "text", "text": ai_prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}],
-            model="meta-llama/llama-4-scout-17b-16e-instruct"
-        )
-        answer = chat_completion.choices[0].message.content.replace("### ", "🔹 ").replace("## ", "🔸 ")
-        
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🧠 Generate Quick Quiz from Image", callback_data=f"imgquiz_{message.id}")]])
-        await msg.edit_text(f"🖼️ **Visual Analysis Report**\n━━━━━━━━━━━━━━━━━━━━\n{answer}\n━━━━━━━━━━━━━━━━━━━━\n👨‍💻 *Engineered by Aditya*", reply_markup=keyboard)
-    except Exception as e:
-        await msg.edit_text(f"⚠️ *Vision Error:* `{str(e)}`")
-    finally:
-        if image_path and os.path.exists(image_path): os.remove(image_path)
 
 # --- 4. ADVANCED VISION HANDLER (With Insta Link) ---
 @app.on_message(filters.photo)
@@ -206,7 +177,84 @@ async def vision_handler(client, message):
         await msg.edit_text(f"⚠️ *Vision Error:* `{str(e)}`")
     finally:
         if image_path and os.path.exists(image_path): os.remove(image_path)
+
+
+# --- 5. IMAGE QUIZ CALLBACK (With Insta Link) ---
+@app.on_callback_query(filters.regex(r"^imgquiz_"))
+async def imgquiz_callback(client, cb):
+    await cb.answer("Synthesizing Quiz... 🧠")
+    await cb.message.edit_text("⏳ *Extracting data to formulate a quiz...*")
+    try:
+        msg_id = int(cb.data.split("_")[1])
+        orig_msg = await client.get_messages(cb.message.chat.id, msg_id)
+        image_path = await orig_msg.download()
         
+        with open(image_path, "rb") as f:
+            base64_image = base64.b64encode(f.read()).decode('utf-8')
+            
+        quiz_content = get_ai_generated_quiz_from_image(base64_image)
+        
+        final_reply = (
+            f"🧠 **Interactive AI Quiz**\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"{quiz_content}\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"👨‍💻 *Engineered by Aditya*\n"
+            f"📸 [Follow me on Instagram](https://www.instagram.com/aadit_paswan.007)"
+        )
+        await cb.message.edit_text(final_reply, disable_web_page_preview=True)
+        if os.path.exists(image_path): os.remove(image_path)
+    except Exception as e:
+        await cb.message.edit_text(f"⚠️ *Quiz Engine Error:* `{str(e)}`")
+
+# --- 6. VOICE PIPELINE (100% Elite, Math Fix & Insta Link) ---
+@app.on_message(filters.voice)
+async def voice_handler(client, message):
+    msg = await message.reply_text("🎧 *Audio received. Transcribing...* ⏳")
+    audio_path = None
+    try:
+        audio_path = await message.download()
+        with open(audio_path, "rb") as file:
+            transcription = groq_client.audio.transcriptions.create(file=(audio_path, file.read()), model="whisper-large-v3", response_format="text")
+        
+        user_question = transcription.strip()
+        if not user_question: return await msg.edit_text("⚠️ **Transcription failed. Please speak clearly.**")
+
+        await msg.edit_text(f"🗣️ *Transcribed Audio:* {user_question}\n\n🧠 *Generating expert response...* ⏳")
+        
+        sys_prompt = (
+            "You are an Elite AI Study Companion developed by Aditya. "
+            "Answer strictly in professional English. "
+            "1. DO NOT use markdown headers (#, ##, ###). Use bold text with emojis for headings. "
+            "2. BULLET POINTS: Use standard bullets '•' or '✅', NEVER use '*'. "
+            "3. MATHEMATICS: NEVER use programming symbols like '^' or '*'. Use proper Unicode math characters (e.g., ², ½, ×). "
+            "4. Always end with a beautifully formatted '💡 Quick Summary:' section."
+        )
+        
+        chat_completion = groq_client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": sys_prompt}, 
+                {"role": "user", "content": user_question}
+            ],
+            model="llama-3.3-70b-versatile"
+        )
+        answer = chat_completion.choices[0].message.content.replace("### ", "").replace("## ", "").replace("# ", "")
+        
+        final_reply = (
+            f"🎙️ **Audio Query Answered**\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"**Q:** {user_question}\n\n"
+            f"{answer}\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"👨‍💻 *Engineered by Aditya*\n"
+            f"📸 [Follow me on Instagram](https://www.instagram.com/aadit_paswan.007)"
+        )
+        await msg.edit_text(final_reply, disable_web_page_preview=True)
+    except Exception as e:
+        await msg.edit_text(f"⚠️ Audio Pipeline Error: `{str(e)}`")
+    finally:
+        if audio_path and os.path.exists(audio_path): os.remove(audio_path)
+            
 
 # --- 7. BASIC COMMANDS ---
 @app.on_message(filters.command("owner"))
