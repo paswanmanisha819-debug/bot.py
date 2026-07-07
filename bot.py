@@ -39,19 +39,25 @@ def get_direct_video(query):
     return f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}"
     
 # --- 1. SMART START & CLASS SETUP (Strict English) ---
-@app.on_message(filters.command(["start", "setup"]))
-async def setup_profile(client, message):
+# --- 2. BACK TO MENU (Clean Navigation) ---
+@app.on_callback_query(filters.regex(r"^back_to_menu$"))
+async def back_to_menu(client, cb):
+    # 1. पहले उस मैसेज को डिलीट करो जहाँ से यूजर बैक आ रहा है
+    await cb.message.delete()
+    
+    # 2. फिर फ्रेश वेलकम मैसेज भेजो (ताकि स्क्रीन एकदम क्लीन हो जाए)
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("🎓 9th Grade", callback_data="setclass_9"), InlineKeyboardButton("🎓 10th Grade", callback_data="setclass_10")],
         [InlineKeyboardButton("🎓 11th Grade", callback_data="setclass_11"), InlineKeyboardButton("🎓 12th Grade", callback_data="setclass_12")],
-        [InlineKeyboardButton("🎓 CBSE Exam Mode", callback_data="exam_mode")] # <--- यह लाइन यहाँ जोड़ना जरूरी है
+        [InlineKeyboardButton("🎓 CBSE Exam Mode", callback_data="exam_mode")]
     ])
     welcome_text = (
         "🤖 **Welcome to the Elite AI Study Companion!**\n\n"
         "To provide you with highly accurate and personalized answers, "
         "please select your current academic grade below:"
     )
-    await message.reply_text(welcome_text, reply_markup=keyboard)
+    await cb.message.reply_text(welcome_text, reply_markup=keyboard)
+    
     
 @app.on_callback_query(filters.regex(r"^setclass_"))
 async def select_sub(client, cb):
