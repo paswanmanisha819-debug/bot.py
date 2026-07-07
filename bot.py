@@ -71,7 +71,7 @@ async def save_profile(client, cb):
     await cb.message.edit_text(success_msg)
 
 
-# --- 2. ADVANCED TEXT SOLVER (Short Videos & Flawless UI) ---
+# --- 2. ADVANCED TEXT SOLVER (Smart YouTube Filter & Flawless UI) ---
 @app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space"]))
 async def smart_solver(client, message):
     uid = message.from_user.id
@@ -102,24 +102,28 @@ async def smart_solver(client, message):
         chat_completion = groq_client.chat.completions.create(
             messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": message.text}],
             model="llama-3.3-70b-versatile",
-            temperature=0.15 # AI को अपनी मर्जी चलाने से रोकने के लिए इसे और भी कम कर दिया है
+            temperature=0.15 
         )
         
-        # सिर्फ फालतू के हैशटैग हटाएंगे, * वाले रिप्लेसमेंट को हटा दिया ताकि **bold** खराब ना हो
         answer = chat_completion.choices[0].message.content.replace("### ", "").replace("## ", "").replace("# ", "")
         
         await db.log_conversation(uid, "user", message.text)
         await db.log_conversation(uid, "model", answer)
 
-        # 🎬 MAGIC YOUTUBE AUTO-SCRAPER (Short Videos Only)
-        # 'under 5 minutes' और 'short explanation' जोड़ने से लंबे लेक्चर नहीं आएंगे
-        search_query = f"{message.text} short explanation class {u['class']} {u['subject']} in hindi under 5 minutes"
+        # 🎬 SMART YOUTUBE AUTO-SCRAPER (Quality & Length Filter)
+        # 'best explanation CBSE in hindi' और '-shorts' से कचरा वीडियो हट जाएंगे
+        search_query = f"{message.text} class {u['class']} CBSE {u['subject']} best explanation in hindi -shorts"
         
         def get_direct_video(query):
             import urllib.request, urllib.parse, re
             try:
-                url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}"
-                html = urllib.request.urlopen(url).read().decode()
+                # &sp=EgIYQA%3D%3D = YouTube Filter for 4 to 20 minutes length only!
+                url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}&sp=EgIYQA%3D%3D"
+                # User-Agent लगाने से YouTube हमारे बोट को ब्लॉक नहीं करेगा
+                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+                html = urllib.request.urlopen(req).read().decode()
+                
+                # वीडियो आईडी ढूँढना
                 video_ids = re.findall(r'"videoId":"([a-zA-Z0-9_-]{11})"', html)
                 if video_ids:
                     return f"https://www.youtube.com/watch?v={video_ids[0]}"
@@ -148,6 +152,7 @@ async def smart_solver(client, message):
         await processing_msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
     except Exception as e:
         await processing_msg.edit_text(f"⚠️ *System Error:* `{str(e)}`")
+        
     
     
         
