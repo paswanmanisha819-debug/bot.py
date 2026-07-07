@@ -70,8 +70,7 @@ async def save_profile(client, cb):
     )
     await cb.message.edit_text(success_msg)
 
-
-# --- 2. ADVANCED TEXT SOLVER (Final Stable Version) ---
+# --- 2. ADVANCED TEXT SOLVER (Full Final & Secure Update) ---
 @app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space"]))
 async def smart_solver(client, message):
     uid = message.from_user.id
@@ -79,20 +78,22 @@ async def smart_solver(client, message):
         return await message.reply("⚠️ **Please use the `/setup` command first.**")
     
     u = user_profiles[uid]
-    processing_msg = await message.reply("🔍 *Analyzing...* ⏳")
+    processing_msg = await message.reply("🔍 *Analyzing your query like a Pro...* ⏳")
     
     try:
-        # यह लाइन सबसे जरूरी है: AI से बात करने के लिए क्लाइंट को बुलाना
-        # सुनिश्चित करें कि आपके कोड की शुरुआत में 'from groq import Groq' लिखा है
+        # Groq Client Initialization
         from groq import Groq
         groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
+        # Strict System Prompt: English Only
         sys_prompt = (
-            f"You are an Elite AI Study Companion. Answer in PROFESSIONAL ENGLISH ONLY. "
-            f"Do not use markdown symbols except bold (**). Use bullet points '•' only."
+            f"You are an Elite AI Study Companion developed by Aditya. "
+            f"Provide a highly accurate, structured answer for a {u['class']}th grade {u['subject']} CBSE student. "
+            f"!!! MANDATORY: Respond EXCLUSIVELY in Professional English. "
+            f"Do not use markdown symbols like #, /, or brackets. Use bold (**) for headings and bullet points (•) only. !!! "
+            f"Provide a '**💡 Quick Summary:**' at the end."
         )
         
-        # अब यह 'chat_completion' एकदम सही काम करेगा
         chat_completion = groq_client.chat.completions.create(
             messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": message.text}],
             model="llama-3.3-70b-versatile",
@@ -100,13 +101,14 @@ async def smart_solver(client, message):
         )
         
         raw_answer = chat_completion.choices[0].message.content
-        # फालतू के सिंबल्स हटाना
-        clean_answer = raw_answer.replace("#", "").replace("/", "").replace("*", "").replace("[", "").replace("]", "")
+        # Sanitization: Clean up any remaining symbols
+        clean_answer = raw_answer.replace("#", "").replace("/", "").replace("[", "").replace("]", "").replace("*", "")
         
-        # YouTube और PDF बटन्स
-        search_query = f"{message.text} class {u['class']} CBSE explanation in hindi -shorts -animation"
+        # YouTube Scraper Call (Uses the external get_direct_video function)
+        search_query = f"{message.text} class {u['class']} CBSE {u['subject']} explanation in hindi -shorts -animation"
         youtube_link = await asyncio.to_thread(get_direct_video, search_query)
         
+        # Inline Buttons
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton("▶️ Watch Video", url=youtube_link),
              InlineKeyboardButton("📥 PDF Notes", callback_data=f"gen_pdf_{message.id}")]
@@ -125,7 +127,6 @@ async def smart_solver(client, message):
         
     except Exception as e:
         await processing_msg.edit_text(f"⚠️ *System Error:* `{str(e)}`")
-    
         
  
 
