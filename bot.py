@@ -10,6 +10,7 @@ from pyrogram import StopPropagation
 from features import get_ai_generated_quiz_from_image
 
 from pyrogram import Client, filters
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from pyrogram.enums import ParseMode
 from pyrogram.errors import FloodWait
@@ -62,7 +63,7 @@ async def start_command(client_bot, message):
 
 @app.on_callback_query(filters.regex("help_doubt"))
 async def help_doubt_handler(client_bot, callback_query):
-    await callback_query.message.edit_text("💡 *Ask your doubt!*\n\nJust type a `?` before your question.\nExample: `? What is motion`")
+    await callback_query.message.edit_text("💡 *Ask your doubt!*\n\nJust type a `` before your question.\nExample: ` What is motion`")
 
 @app.on_callback_query(filters.regex("show_classes"))
 async def show_classes_handler(client_bot, callback_query):
@@ -73,7 +74,44 @@ async def show_classes_handler(client_bot, callback_query):
     
     await callback_query.message.edit_text("Select your class for the Quiz:", reply_markup=keyboard)
                               
-                        
+# --- 2. BUTTON CLICK HANDLER FOR IMAGE QUIZ ---
+@app.on_callback_query(filters.regex(r"^imgquiz_"))
+async def imgquiz_callback(client_bot, callback_query):
+    # बटन दबाते ही लोडिंग मैसेज
+    await callback_query.answer("Generating Quiz... Please wait! 🧠")
+    await callback_query.message.edit_text("⏳ *Creating Quiz from your Image...*")
+    
+    try:
+        # बटन के छिपे हुए डेटा से पुरानी फोटो की ID निकालना
+        msg_id = int(callback_query.data.split("_")[1])
+        
+        # टेलीग्राम से वो पुरानी फोटो वापस मंगाना
+        orig_msg = await client_bot.get_messages(callback_query.message.chat.id, msg_id)
+        
+        image_path = await orig_msg.download()
+        with open(image_path, "rb") as image_file:
+            base64_image = base64.b64encode(image_file.read()).decode('utf-8')
+            
+        # तुम्हारा features.py वाला क्विज़ जनरेटर फंक्शन कॉल करना
+        quiz_content = get_ai_generated_quiz_from_image(base64_image)
+        
+        final_reply = (
+            f"🧠 **Image-Based AI Quiz**\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"{quiz_content}\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"👨‍💻 *Developed by Aditya*"
+        )
+        
+        # पुराना मैसेज हटाकर नया क्विज़ दिखा देना
+        await callback_query.message.edit_text(final_reply)
+        
+        if os.path.exists(image_path):
+            os.remove(image_path)
+            
+    except Exception as e:
+        await callback_query.message.edit_text(f"⚠️ *Quiz Error:* `{str(e)}`")
+
     
 
 # ----------------- OWNER INFO COMMAND -----------------
@@ -420,42 +458,57 @@ async def advanced_question_handler(client_bot, message):
     except Exception as e:
         await msg.edit_text(f"⚠️ *API Error (Screenshot भेजो):*\n`{str(e)}`")
 
-# --- ADVANCED IMAGE VISION WITH AUTO QUIZ HANDLER ---
+
+# --- 1. SMART IMAGE VISION HANDLER ---
 @app.on_message(filters.photo)
 async def vision_handler(client_bot, message):
-    msg = await message.reply_text("🔍 *Scanning Image & Generating Interactive Quiz...* ⏳")
+    # अगर यूजर ने फोटो के नीचे कोई सवाल लिखा है, तो उसे पकड़ो
+    user_question = message.caption if message.caption else "Explain this image/diagram clearly for a 9th grade student."
+    
+    msg = await message.reply_text("🔍 *Scanning Image & Finding Answer...* ⏳")
     image_path = None
     
     try:
-        # 1. टेलीग्राम से इमेज डाउनलोड करें
         image_path = await message.download()
-        
-        # 2. इमेज को एन्कोड (Encode) करें
-        import base64
         with open(image_path, "rb") as image_file:
             base64_image = base64.b64encode(image_file.read()).decode('utf-8')
 
-        # 3. नया Llama 4 Scout मॉडल यूज़ करके क्विज़ जनरेट करना
-        quiz_content = get_ai_generated_quiz_from_image(base64_image)
+        # Groq AI से सवाल का जवाब मांगना
+        chat_completion = client.chat.completions.create(
+            messages=[{
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": f"Answer this concisely: {user_question}"},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
+                ]
+            }],
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
+        )
+        answer = chat_completion.choices[0].message.content
         
-        # 4. प्रीमियम रिप्लाई UI डिज़ाइन
+        # 🌟 मैजिक: एक बटन बनाना जो पुरानी फोटो की ID सेव रखेगा
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("🧠 Generate Quiz from this Image", callback_data=f"imgquiz_{message.id}")]
+        ])
+        
         advanced_reply = (
-            f"🧠 **Image-Based AI Quiz**\n"
+            f"🖼️ *Image Analysis*\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"{quiz_content}\n"
+            f"{answer}\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"👨‍💻 *Developed by Aditya*"
         )
         
-        await msg.edit_text(advanced_reply)
+        # जवाब के साथ बटन भी भेज दो
+        await msg.edit_text(advanced_reply, reply_markup=keyboard)
         
     except Exception as e:
-        await msg.edit_text(f"⚠️ *Vision Quiz Error:* `{str(e)}`")
+        await msg.edit_text(f"⚠️ *Vision Error:* `{str(e)}`")
         
     finally:
-        # 5. मेमोरी खाली करें ताकि सर्वर क्रैश न हो
         if image_path and os.path.exists(image_path):
             os.remove(image_path)
+    
             
         
 
