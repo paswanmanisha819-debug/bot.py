@@ -514,12 +514,64 @@ async def vision_handler(client_bot, message):
     finally:
         if image_path and os.path.exists(image_path):
             os.remove(image_path)
+
+# --- नया स्मार्ट प्रोफाइल सेटअप (इसे यहाँ पेस्ट करें) ---
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+user_profiles = {}
+
+@app.on_message(filters.command("setup") | filters.command("start"))
+async def setup_profile(client_bot, message):
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("9th Class", callback_data="setclass_9"), InlineKeyboardButton("10th Class", callback_data="setclass_10")],
+        [InlineKeyboardButton("11th Class", callback_data="setclass_11"), InlineKeyboardButton("12th Class", callback_data="setclass_12")]
+    ])
+    await message.reply_text("🎓 **Welcome to AI Study Bot!**\n\nसबसे पहले अपनी क्लास सिलेक्ट करो:", reply_markup=keyboard)
+
+@app.on_callback_query(filters.regex(r"^setclass_"))
+async def select_subject_for_profile(client_bot, callback_query):
+    grade = callback_query.data.split("_")[1]
+    subjects = {
+        "9": ["Science", "Maths", "English"],
+        "10": ["Science", "Maths", "SST"],
+        "11": ["Physics", "Chemistry", "Biology", "Maths"],
+        "12": ["Physics", "Chemistry", "Biology", "Maths"]
+    }
+    buttons = []
+    row = []
+    for sub in subjects.get(grade, []):
+        row.append(InlineKeyboardButton(sub, callback_data=f"setsub_{grade}_{sub}"))
+        if len(row) == 2:
+            buttons.append(row); row = []
+    if row: buttons.append(row)
+    await callback_query.message.edit_text(f"📚 **Class {grade}th** - अब अपना सब्जेक्ट चुनो:", reply_markup=InlineKeyboardMarkup(buttons))
+
+@app.on_callback_query(filters.regex(r"^setsub_"))
+async def save_profile(client_bot, callback_query):
+    data = callback_query.data.split("_")
+    user_profiles[callback_query.from_user.id] = {"class": data[1], "subject": data[2]}
+    await callback_query.message.edit_text(f"✅ **Setup Complete!**\n\nप्रोफ़ाइल **Class {data[1]}th - {data[2]}** सेट हो गई है।")
+
+@app.on_message(filters.text & ~filters.command(["start", "setup", "owner"]))
+async def smart_doubt_solver(client_bot, message):
+    user_id = message.from_user.id
+    if user_id not in user_profiles:
+        await message.reply_text("⚠️ प्लीज़ पहले `/setup` दबाकर अपनी क्लास और सब्जेक्ट चुनो!"); return
+    
+    u = user_profiles[user_id]
+    msg = await message.reply_text(f"🔍 *Searching for {u['class']}th {u['subject']}...*")
+    
+    try:
+        chat_completion = client.chat.completions.create(
+            messages=[{"role": "user", "content": f"Answer for {u['class']}th {u['subject']}: {message.text}"}],
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
+        )
+        await msg.edit_text(f"🎓 **{u['class']}th {u['subject']}**\n\n{chat_completion.choices[0].message.content}")
+    except Exception as e:
+        await msg.edit_text(f"⚠️ *Error:* `{str(e)}`")
+                              
         
     
-# [तुम्हारा पुराना कोड यहाँ तक खत्म हो रहा है...]
-    finally:
-        if image_path and os.path.exists(image_path):
-            os.remove(image_path)
 
 # --- यहाँ से नया "स्मार्ट प्रोफाइल सेटअप" कोड पेस्ट करें ---
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
