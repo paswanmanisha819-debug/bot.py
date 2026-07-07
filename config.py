@@ -4,12 +4,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Telegram API Configurations
-API_ID = int(os.getenv("TELEGRAM_API_ID", "32741206"))
-API_HASH = os.getenv("TELEGRAM_API_HASH", "86f71ac666fd565dbff7a35f573a92af")
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8716628627:AAFABIzK8eW5R_UFCUcAtnqaas03J1UBCh4")
+API_ID = int(os.getenv("TELEGRAM_API_ID", "")
+API_HASH = os.getenv("TELEGRAM_API_HASH", "")
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 
 # Gemini AI API Configuration
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AQ.Ab8RN6K6ODLmLNqTMVwsTdiYfvt5dR8aOKW5_a7hiLO1eT70RA")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 # Database Configuration
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///study_companion.db")
