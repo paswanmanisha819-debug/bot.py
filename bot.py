@@ -183,23 +183,22 @@ async def handle_pdf_generation(client, cb):
     finally:
         if pdf_path: safe_cleanup(pdf_path)
 
-
 # --- 5. ADVANCED VISION HANDLER (Clean UI Update) ---
 @app.on_message(filters.photo)
 async def vision_handler(client, message):
-    msg = await message.reply_text("👁️ *Processing image through Vision AI...* ⏳")
+    msg = await message.reply_text("📸 *Processing image through Vision AI...* ⏳")
     image_path = None
     try:
         image_path = await message.download()
         with open(image_path, "rb") as image_file:
             base64_image = base64.b64encode(image_file.read()).decode('utf-8')
-
+        
         user_q = message.caption if message.caption else "Analyze this educational image and explain its core concepts."
         
         # 🌟 STRICT BULLET-POINT PROMPT FOR VISION 🌟
         ai_prompt = (
-            f"You are an Elite AI Study Companion. "
-            f"Analyze this image and answer the user's query: '{user_q}'. "
+            f"You are an Elite AI Study Companion.\n"
+            f"Analyze this image and answer the user's query: '{user_q}'.\n"
             f"CRITICAL FORMATTING RULES:\n"
             f"1. ZERO FLUFF: Answer directly using ONLY bullet points ('•'). No long paragraphs.\n"
             f"2. MATH FORMAT: NEVER use '^' or '*'. Use real Unicode (e.g., ², ³, ×, ÷).\n"
@@ -207,42 +206,40 @@ async def vision_handler(client, message):
             f"4. HEADINGS: Use **Bold Text**. NEVER use markdown headers like # or ##.\n"
             f"5. SUMMARY: End with a '**💡 Quick Summary:**' section."
         )
-
+        
         chat_completion = groq_client.chat.completions.create(
             messages=[{"role": "user", "content": [{"type": "text", "text": ai_prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}],
-            model="meta-llama/llama-4-scout-17b-16e-instruct"
+            model="llama-3.2-90b-vision-preview"
         )
         
-        # कचरा साफ करने वाला फिल्टर
         raw_answer = chat_completion.choices[0].message.content
         clean_answer = raw_answer.replace("###", "").replace("##", "").replace("#", "").replace("`", "")
         
-
-        # 1. वीडियो लिंक जनरेट करना
         search_query = message.caption if message.caption else "Important educational concept"
-        youtube_link = get_direct_video(search_query)
-
-        # 2. परफेक्ट कीबोर्ड (ब्रैकेट्स एकदम क्लोज्ड और सेफ हैं)
+        youtube_link = await asyncio.to_thread(get_direct_video, search_query)
+        
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link), InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")],
             [InlineKeyboardButton("🔙 Back to Main Menu", callback_data="back_to_menu")]
         ])
         
-        
         final_reply = (
-            f"🖼️ **VISUAL ANALYSIS REPORT**\n"
+            f"📸 **VISUAL ANALYSIS REPORT**\n"
             f"━━━━━━━━━━━━━━━━━━━━\n\n"
             f"{clean_answer}\n\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"👨‍💻 *Engineered by Aditya*\n"
             f"📸 [Follow on Instagram](https://www.instagram.com/aadit_paswan.007)"
         )
+        
         await msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
+        
+    # यह वाला हिस्सा तुम्हारे कोड से गायब हो गया था, जिसे मैंने वापस लगा दिया है 👇
     except Exception as e:
         await msg.edit_text(f"⚠️ *Vision Error:* `{str(e)}`")
     finally:
-        if image_path and os.path.exists(image_path): os.remove(image_path)
-
+        if image_path and os.path.exists(image_path):
+            os.remove(image_path)
             
 
 # --- 5. IMAGE QUIZ CALLBACK (With Insta Link) ---
