@@ -45,35 +45,32 @@ def get_direct_video(query):
         pass
     return f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}"
 
-# --- ADMIN GATEWAY (ELITE ROOT EDITION) ---
+# --- ADMIN GATEWAY (ELITE DASHBOARD EDITION) ---
 @app.on_message(filters.command("admin"))
 async def admin_gateway(client, message):
     if not is_admin(message.from_user.id):
         return 
     
-    root_text = (
-        "⚠️ **WARNING: ROOT PRIVILEGES GRANTED** ⚠️\n"
-        "━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        "**[root@study-server /]#** `whoami`\n"
-        "> `root_admin_active`\n\n"
-        "**[root@study-server /]#** `systemctl status core`\n"
-        "> `Status: ACTIVE (Running) - Bootloader Unlocked`\n\n"
-        "**[root@study-server /]#** `cat /var/log/security.log`\n"
-        "> `Encryption: AES-256 (Bypassed)`\n"
-        "━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        "Awaiting execution command..."
+    dashboard_text = (
+        "🛡️ **SYSTEM ROOT CONTROL**\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        "👤 **Admin:** Aditya (Owner)\n"
+        "🟢 **Bot Status:** Online & Active\n"
+        "📊 **Total Users:** [Fetching...]\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        "👇 *Select an operation below:*"
     )
     
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🖥️ [sys_monitor.sh]", callback_data="admin_stats"), 
-         InlineKeyboardButton("📡 [global_ping.sh]", callback_data="admin_broadcast")],
-        [InlineKeyboardButton("📂 [dump_database.bin]", callback_data="admin_db"), 
-         InlineKeyboardButton("🛡️ [firewall_logs.txt]", callback_data="admin_logs")],
-        [InlineKeyboardButton("💀 [manage_users.exe]", callback_data="admin_users")],
-        [InlineKeyboardButton("🔴 exit_terminal", callback_data="back_to_menu")]
+        [InlineKeyboardButton("📢 Broadcast", callback_data="admin_broadcast"), 
+         InlineKeyboardButton("📊 Live Database", callback_data="admin_db")],
+        [InlineKeyboardButton("🛑 Ban / Unban", callback_data="admin_ban"), 
+         InlineKeyboardButton("⚙️ Maintenance", callback_data="admin_maint")],
+        [InlineKeyboardButton("🔙 Close Panel", callback_data="back_to_menu")]
     ])
     
-    await message.reply(root_text, reply_markup=keyboard)
+    await message.reply(dashboard_text, reply_markup=keyboard)
+
         
 # --- 1. SMART START & CLASS SETUP ---
 
