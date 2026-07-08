@@ -317,8 +317,9 @@ async def voice_handler(client, message):
         # 2. तुम्हारा परफेक्ट कीबोर्ड (आजू-बाजू वाले वीडियो और पीडीएफ बटन, और नीचे बैक बटन)
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link), InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")],
-            [InlineKeyboardButton("🔙 Back to Main Menu", callback_data="back_to_menu")]
+            [InlineKeyboardButton("🔙 Back to Main Menu", callback_data=f"back_to_menu_{message.id}")]
         ])
+        
 
         final_reply = (
             f"🎙️ **AUDIO QUERY ANSWERED**\n"
