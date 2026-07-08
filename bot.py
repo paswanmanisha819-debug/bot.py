@@ -60,18 +60,55 @@ async def send_welcome(client, message, is_callback=False):
 async def start_command(client, message):
     await send_welcome(client, message, is_callback=False)
 
-# यह रहा वो जरूरी बैक बटन जो लोडिंग वाली प्रॉब्लम खत्म करेगा
 @app.on_callback_query(filters.regex(r"^back_to_menu"))
 async def back_to_menu(client, cb):
     try:
-        # ओरिजिनल मैसेज डिलीट करें
         if "_" in cb.data:
             msg_id = cb.data.split("_")[-1]
             await client.delete_messages(cb.message.chat.id, int(msg_id))
     except:
         pass 
-    await cb.answer() # लोडिंग लाइन हटाएगा
-    await send_welcome(client, cb.message, is_callback=True) # मैसेज एडिट करेगा
+    await cb.answer()
+    await send_welcome(client, cb.message, is_callback=True)
+
+@app.on_callback_query(filters.regex(r"^setclass_"))
+async def select_sub(client, cb):
+    grade = cb.data.split("_")[1]
+    subs = {
+        "9": ["Science", "Mathematics", "English"], 
+        "10": ["Science", "Mathematics", "Social Science"], 
+        "11": ["Physics", "Chemistry", "Biology", "Mathematics"], 
+        "12": ["Physics", "Chemistry", "Biology", "Mathematics"]
+    }
+    buttons = []
+    row = []
+    for s in subs.get(grade, []):
+        row.append(InlineKeyboardButton(f"📚 {s}", callback_data=f"setsub_{grade}_{s}"))
+        if len(row) == 2:
+            buttons.append(row); row = []
+    if row: buttons.append(row)
+    
+    await cb.message.edit_text(
+        f"📘 **Grade {grade} Selected.**\nNow, please select your target subject:", 
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
+    await cb.answer()
+
+@app.on_callback_query(filters.regex(r"^setsub_"))
+async def save_profile(client, cb):
+    d = cb.data.split("_")
+    user_profiles[cb.from_user.id] = {"class": d[1], "subject": d[2]}
+    await db.create_or_update_user(cb.from_user.id, cb.from_user.username, student_class=d[1])
+    
+    success_msg = (
+        f"✅ **Configuration Complete!**\n━━━━━━━━━━━━━━━━━━━━\n"
+        f"🎓 **Grade:** {d[1]}th\n"
+        f"📚 **Subject:** {d[2]}\n━━━━━━━━━━━━━━━━━━━━\n"
+        f"💡 *You are all set! Type any doubt, send a photo of a diagram, or record a voice note to get started.*"
+    )
+    await cb.message.edit_text(success_msg)
+    await cb.answer()
+    
 
 # --- 2. ADVANCED TEXT SOLVER (100% Clean UI & Crash-Proof Edition) ---
 @app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space"]))
