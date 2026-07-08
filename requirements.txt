@@ -8,5 +8,5 @@ pillow
 reportlab
 SpeechRecognition
 pydub
-ffmpeg-python
-
+pyTelegramBotAPI
+Flask
