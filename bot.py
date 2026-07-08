@@ -45,12 +45,23 @@ def get_direct_video(query):
 async def start_command(client, message):
     await send_welcome(client, message)
 
-# ये बटन के लिए है (जब तुम 'Back' दबाओगे)
-@app.on_callback_query(filters.regex(r"^back_to_menu$"))
+# --- UNIVERSAL BACK BUTTON (Auto-Delete Fix) ---
+@app.on_callback_query(filters.regex(r"^back_to_menu"))
 async def back_to_menu(client, cb):
-    await cb.message.delete()
-    await send_welcome(client, cb.message)
+    try:
+        # 1. बोट का अपना जवाब डिलीट करो
+        await cb.message.delete()
+        
+        # 2. यूज़र का ओरिजिनल मैसेज (वॉइस, फोटो या टेक्स्ट) डिलीट करो
+        if "_" in cb.data:
+            msg_id = cb.data.split("_")[-1]
+            await client.delete_messages(cb.message.chat.id, int(msg_id))
+    except:
+        pass 
 
+    # 3. एकदम फ्रेश मेन मेनू वापस भेजो (बिना कोड छेड़े)
+    await send_welcome(client, cb.message)
+            
 # ये रहा वो कॉमन फंक्शन जो दोनों जगह काम करेगा
 async def send_welcome(client, message):
     keyboard = InlineKeyboardMarkup([
@@ -210,7 +221,8 @@ async def vision_handler(client, message):
         
         chat_completion = groq_client.chat.completions.create(
             messages=[{"role": "user", "content": [{"type": "text", "text": ai_prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}],
-            model="llama-3.2-11b-vision-preview"
+            model="meta-llama/llama-4-scout-17b-16e-instruct"
+            
         )
         
         raw_answer = chat_completion.choices[0].message.content
