@@ -567,32 +567,59 @@ async def exam_callback(client, cb):
 
     elif cb.data == "exam_stats":
         await cb.message.edit_text("📊 **Performance Report**\n\n*You are doing great in Physics! Chemistry needs a bit more focus.*")
-        
-# --- ADVANCED CALLBACK HANDLER ---
+
+# --- ADVANCED CALLBACK HANDLER (DASHBOARD EDITION) ---
 @app.on_callback_query(filters.regex(r"^admin_"))
 async def admin_interface(client, cb):
     if not is_admin(cb.from_user.id):
-        return await cb.answer("⚠️ Unauthorized access denied.", show_alert=True)
+        return await cb.answer("⚠️ System Alert: Unauthorized access denied.", show_alert=True)
     
     action = cb.data.split("_")[1]
     
-    if action == "stats":
+    if action == "broadcast":
         await cb.message.edit_text(
-            "📊 **Real-time System Stats**\n\n"
-            "• Operational Status: Online\n"
-            "• Database Integrity: Verified\n"
-            "• Active Memory Load: 14% [Low]\n",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back to Admin", callback_data="admin_back")]])
+            "📢 **Global Broadcast System**\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "The broadcast engine is standing by.\n\n"
+            "*(Backend logic for sending messages to all users will be integrated here.)*",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Close Menu", callback_data="close_admin")]])
         )
-    
-    elif action == "broadcast":
+        
+    elif action == "db":
         await cb.message.edit_text(
-            "📢 **Broadcast Engine Ready**\n\nPlease reply to the next message with the content to broadcast to all users.",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back to Admin", callback_data="admin_back")]])
+            "📊 **Live Database Statistics**\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "• Database Connection: Stable\n"
+            "• Total Registered Users: Fetching...\n\n"
+            "*(Backend database queries will be linked here.)*",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Close Menu", callback_data="close_admin")]])
+        )
+        
+    elif action == "ban":
+        await cb.message.edit_text(
+            "🛑 **User Restriction Panel**\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "Ban or unban users to maintain system integrity.\n\n"
+            "*(Target user ID logic will be configured here.)*",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Close Menu", callback_data="close_admin")]])
+        )
+        
+    elif action == "maint":
+        await cb.message.edit_text(
+            "⚙️ **System Maintenance Mode**\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            "Current Status: OFFLINE\n\n"
+            "*(Toggle logic to pause bot for normal users will be added here.)*",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Close Menu", callback_data="close_admin")]])
         )
         
     await cb.answer()
-    
+
+@app.on_callback_query(filters.regex(r"^close_admin$"))
+async def close_admin_panel(client, cb):
+    if is_admin(cb.from_user.id):
+        await cb.message.delete()
+        await cb.answer("Panel closed.", show_alert=False)
     
 # --- MAIN RUNNER ---
 if __name__ == "__main__":
