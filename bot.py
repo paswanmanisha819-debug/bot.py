@@ -63,18 +63,30 @@ async def start_command(client, message):
     await send_welcome(client, message, is_callback=False)
 
 # यूनिवर्सल बैक बटन (मैसेज एडिट करेगा, नया नहीं भेजेगा)
-@app.on_callback_query(filters.regex(r"^back_to_menu"))
-async def back_to_menu(client, cb):
-    try:
-        # ओरिजिनल सवाल (फोटो/वॉइस) डिलीट करो
-        if "_" in cb.data:
-            msg_id = cb.data.split("_")[-1]
-            await client.delete_messages(cb.message.chat.id, int(msg_id))
-    except:
-        pass 
+@app.on_callback_query(filters.regex(r"^setclass_"))
+async def select_sub(client, cb):
+    grade = cb.data.split("_")[1]
+    subs = {
+        "9": ["Science", "Mathematics", "English"], 
+        "10": ["Science", "Mathematics", "Social Science"], 
+        "11": ["Physics", "Chemistry", "Biology", "Mathematics"], 
+        "12": ["Physics", "Chemistry", "Biology", "Mathematics"]
+    }
+    buttons = []
+    row = []
+    for s in subs.get(grade, []):
+        row.append(InlineKeyboardButton(f"📚 {s}", callback_data=f"setsub_{grade}_{s}"))
+        if len(row) == 2:
+            buttons.append(row); row = []
+    if row: buttons.append(row)
     
-    # अब यह एडिट करेगा (कोई डुप्लीकेट मैसेज नहीं आएगा)
-    await send_welcome(client, cb.message, is_callback=True)
+    # यह वाला कोड 'वाइट लाइन' वाली समस्या खत्म कर देगा
+    await cb.message.edit_text(
+        f"📘 **Grade {grade} Selected.**\nNow, please select your target subject:", 
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
+    await cb.answer() # यह बटन दबाते ही लोडिंग को खत्म कर देगा!
+    
     
 # --- 2. ADVANCED TEXT SOLVER (100% Clean UI & Crash-Proof Edition) ---
 @app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space"]))
