@@ -38,71 +38,44 @@ def get_direct_video(query):
         pass
     return f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}"
 
-# --- 1. SMART START & CLASS SETUP (Updated for Commands & Callbacks) ---
+# --- 1. SMART START & CLASS SETUP (Full Crash-Proof Fix) ---
 
-# ये कमांड के लिए है (जब तुम /start टाइप करोगे)
-@app.on_message(filters.command(["start", "setup"]))
-async def start_command(client, message):
-    await send_welcome(client, message)
-
-# --- UNIVERSAL BACK BUTTON (Clean UI Fix) ---
-@app.on_callback_query(filters.regex(r"^back_to_menu"))
-async def back_to_menu(client, cb):
-    try:
-        # 1. सिर्फ यूज़र का ओरिजिनल मैसेज (फोटो/वॉइस/टेक्स्ट) डिलीट करो
-        if "_" in cb.data:
-            msg_id = cb.data.split("_")[-1]
-            await client.delete_messages(cb.message.chat.id, int(msg_id))
-    except:
-        pass 
-
-    # 2. बोट के जवाब को डिलीट करने के बजाय, उसे 'एडिट' करके मेन मेनू बना दो! (No duplicate messages)
+# सबसे पहले ये फंक्शन रखो
+async def send_welcome(client, message, is_callback=False):
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("🎓 9th Grade", callback_data="setclass_9"), InlineKeyboardButton("🎓 10th Grade", callback_data="setclass_10")],
         [InlineKeyboardButton("🎓 11th Grade", callback_data="setclass_11"), InlineKeyboardButton("🎓 12th Grade", callback_data="setclass_12")],
         [InlineKeyboardButton("🎓 CBSE Exam Mode", callback_data="exam_mode")]
     ])
-    welcome_text = (
+    text = (
         "🤖 **Welcome to the Elite AI Study Companion!**\n\n"
         "To provide you with highly accurate and personalized answers, "
         "please select your current academic grade below:"
     )
-    await cb.message.edit_text(welcome_text, reply_markup=keyboard)
-    
-        
-    
-@app.on_callback_query(filters.regex(r"^setclass_"))
-async def select_sub(client, cb):
-    grade = cb.data.split("_")[1]
-    subs = {
-        "9": ["Science", "Mathematics", "English"], 
-        "10": ["Science", "Mathematics", "Social Science"], 
-        "11": ["Physics", "Chemistry", "Biology", "Mathematics"], 
-        "12": ["Physics", "Chemistry", "Biology", "Mathematics"]
-    }
-    buttons = []
-    row = []
-    for s in subs.get(grade, []):
-        row.append(InlineKeyboardButton(f"📚 {s}", callback_data=f"setsub_{grade}_{s}"))
-        if len(row) == 2:
-            buttons.append(row); row = []
-    if row: buttons.append(row)
-    await cb.message.edit_text(f"📘 **Grade {grade} Selected.**\nNow, please select your target subject:", reply_markup=InlineKeyboardMarkup(buttons))
+    if is_callback:
+        await message.edit_text(text, reply_markup=keyboard)
+    else:
+        await message.reply_text(text, reply_markup=keyboard)
 
-@app.on_callback_query(filters.regex(r"^setsub_"))
-async def save_profile(client, cb):
-    d = cb.data.split("_")
-    user_profiles[cb.from_user.id] = {"class": d[1], "subject": d[2]}
-    await db.create_or_update_user(cb.from_user.id, cb.from_user.username, student_class=d[1])
-    
-    success_msg = (
-        f"✅ **Configuration Complete!**\n━━━━━━━━━━━━━━━━━━━━\n"
-        f"🎓 **Grade:** {d[1]}th\n"
-        f"📚 **Subject:** {d[2]}\n━━━━━━━━━━━━━━━━━━━━\n"
-        f"💡 *You are all set! Type any doubt, send a photo of a diagram, or record a voice note to get started.*"
-    )
-    await cb.message.edit_text(success_msg)
+# स्टार्ट कमांड
+@app.on_message(filters.command(["start", "setup"]))
+async def start_command(client, message):
+    await send_welcome(client, message, is_callback=False)
 
+# यूनिवर्सल बैक बटन (मैसेज एडिट करेगा, नया नहीं भेजेगा)
+@app.on_callback_query(filters.regex(r"^back_to_menu"))
+async def back_to_menu(client, cb):
+    try:
+        # ओरिजिनल सवाल (फोटो/वॉइस) डिलीट करो
+        if "_" in cb.data:
+            msg_id = cb.data.split("_")[-1]
+            await client.delete_messages(cb.message.chat.id, int(msg_id))
+    except:
+        pass 
+    
+    # अब यह एडिट करेगा (कोई डुप्लीकेट मैसेज नहीं आएगा)
+    await send_welcome(client, cb.message, is_callback=True)
+    
 # --- 2. ADVANCED TEXT SOLVER (100% Clean UI & Crash-Proof Edition) ---
 @app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space"]))
 async def smart_solver(client, message):
