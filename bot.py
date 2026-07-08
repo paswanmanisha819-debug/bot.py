@@ -38,9 +38,8 @@ def get_direct_video(query):
         pass
     return f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}"
 
-# --- 1. SMART START & CLASS SETUP (Full Crash-Proof Fix) ---
+# --- 1. SMART START & CLASS SETUP ---
 
-# सबसे पहले ये फंक्शन रखो
 async def send_welcome(client, message, is_callback=False):
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("🎓 9th Grade", callback_data="setclass_9"), InlineKeyboardButton("🎓 10th Grade", callback_data="setclass_10")],
@@ -57,40 +56,23 @@ async def send_welcome(client, message, is_callback=False):
     else:
         await message.reply_text(text, reply_markup=keyboard)
 
-# स्टार्ट कमांड
 @app.on_message(filters.command(["start", "setup"]))
 async def start_command(client, message):
     await send_welcome(client, message, is_callback=False)
 
-# यूनिवर्सल बैक बटन (मैसेज एडिट करेगा, नया नहीं भेजेगा)
-@app.on_callback_query(filters.regex(r"^setclass_"))
-async def select_sub(client, cb):
-    # यह चेक करेगा कि कौन सी क्लास चुनी गई है
-    grade = cb.data.split("_")[1]
-    subs = {
-        "9": ["Science", "Mathematics", "English"], 
-        "10": ["Science", "Mathematics", "Social Science"], 
-        "11": ["Physics", "Chemistry", "Biology", "Mathematics"], 
-        "12": ["Physics", "Chemistry", "Biology", "Mathematics"]
-    }
-    buttons = []
-    row = []
-    for s in subs.get(grade, []):
-        row.append(InlineKeyboardButton(f"📚 {s}", callback_data=f"setsub_{grade}_{s}"))
-        if len(row) == 2:
-            buttons.append(row); row = []
-    if row: buttons.append(row)
-    
-    # यहाँ से नया पेज लोड होगा
-    await cb.message.edit_text(
-        f"📘 **Grade {grade} Selected.**\nNow, please select your target subject:", 
-        reply_markup=InlineKeyboardMarkup(buttons)
-    )
-    # यह वाली लाइन सबसे ज़रूरी है, जो बोट को 'अटकने' से बचाएगी
-    await cb.answer() 
-    
-    
-    
+# यह रहा वो जरूरी बैक बटन जो लोडिंग वाली प्रॉब्लम खत्म करेगा
+@app.on_callback_query(filters.regex(r"^back_to_menu"))
+async def back_to_menu(client, cb):
+    try:
+        # ओरिजिनल मैसेज डिलीट करें
+        if "_" in cb.data:
+            msg_id = cb.data.split("_")[-1]
+            await client.delete_messages(cb.message.chat.id, int(msg_id))
+    except:
+        pass 
+    await cb.answer() # लोडिंग लाइन हटाएगा
+    await send_welcome(client, cb.message, is_callback=True) # मैसेज एडिट करेगा
+
 # --- 2. ADVANCED TEXT SOLVER (100% Clean UI & Crash-Proof Edition) ---
 @app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space"]))
 async def smart_solver(client, message):
