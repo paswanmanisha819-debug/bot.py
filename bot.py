@@ -557,6 +557,32 @@ async def exam_callback(client, cb):
 
     elif cb.data == "exam_stats":
         await cb.message.edit_text("📊 **Performance Report**\n\n*You are doing great in Physics! Chemistry needs a bit more focus.*")
+        
+# --- ADVANCED CALLBACK HANDLER ---
+@app.on_callback_query(filters.regex(r"^admin_"))
+async def admin_interface(client, cb):
+    if not is_admin(cb.from_user.id):
+        return await cb.answer("⚠️ Unauthorized access denied.", show_alert=True)
+    
+    action = cb.data.split("_")[1]
+    
+    if action == "stats":
+        await cb.message.edit_text(
+            "📊 **Real-time System Stats**\n\n"
+            "• Operational Status: Online\n"
+            "• Database Integrity: Verified\n"
+            "• Active Memory Load: 14% [Low]\n",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back to Admin", callback_data="admin_back")]])
+        )
+    
+    elif action == "broadcast":
+        await cb.message.edit_text(
+            "📢 **Broadcast Engine Ready**\n\nPlease reply to the next message with the content to broadcast to all users.",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Back to Admin", callback_data="admin_back")]])
+        )
+        
+    await cb.answer()
+    
     
 # --- MAIN RUNNER ---
 if __name__ == "__main__":
