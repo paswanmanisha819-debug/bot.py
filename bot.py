@@ -45,25 +45,18 @@ def get_direct_video(query):
 async def start_command(client, message):
     await send_welcome(client, message)
 
-# --- UNIVERSAL BACK BUTTON (Auto-Delete Fix) ---
+# --- UNIVERSAL BACK BUTTON (Clean UI Fix) ---
 @app.on_callback_query(filters.regex(r"^back_to_menu"))
 async def back_to_menu(client, cb):
     try:
-        # 1. बोट का अपना जवाब डिलीट करो
-        await cb.message.delete()
-        
-        # 2. यूज़र का ओरिजिनल मैसेज (वॉइस, फोटो या टेक्स्ट) डिलीट करो
+        # 1. सिर्फ यूज़र का ओरिजिनल मैसेज (फोटो/वॉइस/टेक्स्ट) डिलीट करो
         if "_" in cb.data:
             msg_id = cb.data.split("_")[-1]
             await client.delete_messages(cb.message.chat.id, int(msg_id))
     except:
         pass 
 
-    # 3. एकदम फ्रेश मेन मेनू वापस भेजो (बिना कोड छेड़े)
-    await send_welcome(client, cb.message)
-            
-# ये रहा वो कॉमन फंक्शन जो दोनों जगह काम करेगा
-async def send_welcome(client, message):
+    # 2. बोट के जवाब को डिलीट करने के बजाय, उसे 'एडिट' करके मेन मेनू बना दो! (No duplicate messages)
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("🎓 9th Grade", callback_data="setclass_9"), InlineKeyboardButton("🎓 10th Grade", callback_data="setclass_10")],
         [InlineKeyboardButton("🎓 11th Grade", callback_data="setclass_11"), InlineKeyboardButton("🎓 12th Grade", callback_data="setclass_12")],
@@ -74,11 +67,8 @@ async def send_welcome(client, message):
         "To provide you with highly accurate and personalized answers, "
         "please select your current academic grade below:"
     )
-    # अगर ये callback है तो edit_text, अगर message है तो reply
-    if hasattr(message, 'edit_text'):
-        await message.reply_text(welcome_text, reply_markup=keyboard)
-    else:
-        await message.reply_text(welcome_text, reply_markup=keyboard)
+    await cb.message.edit_text(welcome_text, reply_markup=keyboard)
+    
         
     
 @app.on_callback_query(filters.regex(r"^setclass_"))
@@ -284,9 +274,12 @@ async def imgquiz_callback(client, cb):
     except Exception as e:
         await cb.message.edit_text(f"⚠️ *Quiz Engine Error:* `{str(e)}`")
 
-# --- 6. VOICE PIPELINE (Clean UI Update) ---
+# --- 6. VOICE PIPELINE (100% Old Strict Prompt Restored) ---
 @app.on_message(filters.voice)
 async def voice_handler(client, message):
+    uid = message.from_user.id
+    u = user_profiles.get(uid, {"class": "9", "subject": "Science"}) # User Profile Fetch
+    
     msg = await message.reply_text("🎙️ *Audio received. Transcribing...* ⏳")
     audio_path = None
     try:
@@ -302,15 +295,17 @@ async def voice_handler(client, message):
         
         await msg.edit_text(f"🎙️ *Transcribed:* {user_question}\n\n🧠 *Generating expert response...* ⏳")
         
-        # 🌟 STRICT BULLET-POINT PROMPT FOR VOICE 🌟
+        # 🌟 THE ULTIMATE STRICT PROMPT (Same as Text Solver) 🌟
         sys_prompt = (
-            "You are an Elite AI Study Companion. Answer strictly in professional English.\n"
-            "CRITICAL FORMATTING RULES:\n"
-            "1. ZERO FLUFF: Answer directly using ONLY bullet points ('•'). No paragraphs.\n"
-            "2. MATH FORMAT: NEVER use '^' or '*'. Use real Unicode (e.g., ², ³, ×, ÷).\n"
-            "3. SPACING: Add a blank line (double enter) between EVERY bullet point.\n"
-            "4. HEADINGS: Use **Bold Text**. NEVER use markdown headers like # or ##.\n"
-            "5. SUMMARY: End with a '**💡 Quick Summary:**' section."
+            f"You are an Elite AI Study Companion for a {u['class']}th grade {u['subject']} CBSE student. "
+            f"RESPOND IN PROFESSIONAL ENGLISH ONLY. "
+            f"CRITICAL FORMATTING RULES:\n"
+            f"1. ZERO FLUFF: Give direct, to-the-point answers. No long, cluttered paragraphs.\n"
+            f"2. BULLET POINTS ONLY: Use the '•' symbol for all explanations.\n"
+            f"3. SPACING (VITAL): You MUST add a double line break (blank line) between EVERY single bullet point to keep the UI spacious and clean.\n"
+            f"4. MATH & FORMULAS: NEVER use programming symbols like '^', '*', or '/'. You MUST use real Unicode (e.g., ², ³, ⁻¹, ×, ÷). Write formulas cleanly on their own lines (e.g., F = m × a).\n"
+            f"5. HEADINGS: Use **Bold Text** for headings. NEVER use Markdown headers like #, ##, or ###.\n"
+            f"6. SUMMARY: Always end with a short '**💡 Quick Summary:**' section."
         )
         
         chat_completion = groq_client.chat.completions.create(
@@ -325,15 +320,12 @@ async def voice_handler(client, message):
         raw_answer = chat_completion.choices[0].message.content
         clean_answer = raw_answer.replace("###", "").replace("##", "").replace("#", "").replace("`", "")
         
-        # 1. यूट्यूब वीडियो का लिंक जनरेट करना
         youtube_link = await asyncio.to_thread(get_direct_video, user_question)
 
-        # 2. तुम्हारा परफेक्ट कीबोर्ड (आजू-बाजू वाले वीडियो और पीडीएफ बटन, और नीचे बैक बटन)
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link), InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")],
             [InlineKeyboardButton("🔙 Back to Main Menu", callback_data=f"back_to_menu_{message.id}")]
         ])
-        
 
         final_reply = (
             f"🎙️ **AUDIO QUERY ANSWERED**\n"
@@ -347,15 +339,12 @@ async def voice_handler(client, message):
         
         await msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
         
-    # ⚠️ यह वाला हिस्सा डिलीट हो गया था, जिसे मैंने वापस एकदम सही जगह पर लगा दिया है 👇
     except Exception as e:
         await msg.edit_text(f"⚠️ *Audio Pipeline Error:* `{str(e)}`")
     finally:
         if audio_path and os.path.exists(audio_path):
             os.remove(audio_path)
-    
-    
-
+        
 # --- 7. BASIC COMMANDS ---
 @app.on_message(filters.command("owner"))
 async def owner_info(client, message):
