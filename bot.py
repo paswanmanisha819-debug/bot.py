@@ -65,6 +65,7 @@ async def start_command(client, message):
 # यूनिवर्सल बैक बटन (मैसेज एडिट करेगा, नया नहीं भेजेगा)
 @app.on_callback_query(filters.regex(r"^setclass_"))
 async def select_sub(client, cb):
+    # यह चेक करेगा कि कौन सी क्लास चुनी गई है
     grade = cb.data.split("_")[1]
     subs = {
         "9": ["Science", "Mathematics", "English"], 
@@ -80,12 +81,14 @@ async def select_sub(client, cb):
             buttons.append(row); row = []
     if row: buttons.append(row)
     
-    # यह वाला कोड 'वाइट लाइन' वाली समस्या खत्म कर देगा
+    # यहाँ से नया पेज लोड होगा
     await cb.message.edit_text(
         f"📘 **Grade {grade} Selected.**\nNow, please select your target subject:", 
         reply_markup=InlineKeyboardMarkup(buttons)
     )
-    await cb.answer() # यह बटन दबाते ही लोडिंग को खत्म कर देगा!
+    # यह वाली लाइन सबसे ज़रूरी है, जो बोट को 'अटकने' से बचाएगी
+    await cb.answer() 
+    
     
     
 # --- 2. ADVANCED TEXT SOLVER (100% Clean UI & Crash-Proof Edition) ---
