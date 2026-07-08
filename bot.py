@@ -328,46 +328,151 @@ async def space_handler(client, message):
     facts = ["Did you know? A day on Venus is longer than a year on Venus! 🪐", "Space is completely silent. 🌌", "There are more stars in the universe than grains of sand on all Earth's beaches. ✨"]
     await message.reply_text(random.choice(facts))
 
-# --- 9. CBSE 9th CLASS EXAM ENGINE (Pro-Layered Navigation) ---
+# --- 9. AI-POWERED CBSE EXAM ENGINE (ULTIMATE UI & CLEAN MATH) ---
 
-# 1. मेन एग्जाम पैनल
+import asyncio
+
+# ✨ एनिमेटेड ट्रांज़िशन (ऐप जैसा स्मूथ इफ़ेक्ट)
+async def animate_transition(cb, text):
+    try:
+        await cb.message.edit_text(f"⏳ *{text}...*")
+        await asyncio.sleep(0.3)
+    except:
+        pass
+
+# 📍 लेवल 1: क्लास सिलेक्शन (मेन पैनल)
 @app.on_callback_query(filters.regex(r"^exam_mode$"))
-async def main_exam_panel(client, cb):
+async def exam_root_panel(client, cb):
+    await animate_transition(cb, "Opening Exam Center")
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("📚 9th Important Questions", callback_data="exam_9th_imp")],
-        [InlineKeyboardButton("⏱️ Mock Test", callback_data="exam_9th_mock")],
-        [InlineKeyboardButton("📊 My Progress", callback_data="exam_9th_stats")],
-        [InlineKeyboardButton("⬅️ Back to Main Menu", callback_data="back_to_menu")] # यह बटन तुम्हें वेलकम मैसेज पर ले जाएगा
+        [InlineKeyboardButton("🎓 9th Grade", callback_data="ex_cls_9"), InlineKeyboardButton("🎓 10th Grade", callback_data="ex_cls_10")],
+        [InlineKeyboardButton("🎓 11th Grade", callback_data="ex_cls_11"), InlineKeyboardButton("🎓 12th Grade", callback_data="ex_cls_12")],
+        [InlineKeyboardButton("🔙 Exit to Main Menu", callback_data="back_to_menu")]
     ])
     await cb.message.edit_text(
-        "🎓 **CBSE 9th GRADE EXAM CENTER**\n"
+        "🎓 **UNIVERSAL CBSE EXAM CENTER**\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
-        "Select an option to sharpen your preparation:",
+        "Welcome to the advanced preparation portal.\n\n"
+        "👇 **Select your target class:**",
         reply_markup=keyboard
     )
 
-# 2. बैक बटन लॉजिक (जो सीधा वेलकम स्क्रीन पर ले जाएगा)
-@app.on_callback_query(filters.regex(r"^back_to_menu$"))
-async def back_to_menu(client, cb):
-    # यह सीधे तुम्हारे setup_profile फंक्शन को कॉल कर देगा
-    await setup_profile(client, cb.message)
+# 📍 लेवल 2: सब्जेक्ट सिलेक्शन (डायनामिक ग्रिड)
+@app.on_callback_query(filters.regex(r"^ex_cls_(.*)$"))
+async def exam_subject_panel(client, cb):
+    grade = cb.matches[0].group(1)
+    await animate_transition(cb, f"Loading {grade}th Subjects")
 
-# 3. 9th ग्रेड एग्जाम सब-मेनू
-@app.on_callback_query(filters.regex(r"^exam_9th_"))
-async def exam_9th_callback(client, cb):
-    if cb.data == "exam_9th_imp":
-        await cb.message.edit_text("🔍 **Select Subject:**", 
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🧪 Science", callback_data="imp_sci"), InlineKeyboardButton("📐 Maths", callback_data="imp_math")],
-            [InlineKeyboardButton("⬅️ Back", callback_data="exam_mode")]
-        ]))
-    elif cb.data == "exam_9th_mock":
-        await cb.message.edit_text("⏱️ **Mock Test Engine Coming Soon!**", 
-        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Back", callback_data="exam_mode")]]))
-    elif cb.data == "exam_9th_stats":
-        await cb.message.edit_text("📊 **Your Progress Report:**\n\n*Keep studying!*", 
-        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Back", callback_data="exam_mode")]]))
+    if grade in ["9", "10"]:
+        subs = [
+            [InlineKeyboardButton("🧪 Science", callback_data=f"ex_act_{grade}_Science"), InlineKeyboardButton("📐 Maths", callback_data=f"ex_act_{grade}_Maths")],
+            [InlineKeyboardButton("🌍 SST", callback_data=f"ex_act_{grade}_Social_Science"), InlineKeyboardButton("📝 English", callback_data=f"ex_act_{grade}_English")]
+        ]
+    else:
+        subs = [
+            [InlineKeyboardButton("⚡ Physics", callback_data=f"ex_act_{grade}_Physics"), InlineKeyboardButton("🧪 Chemistry", callback_data=f"ex_act_{grade}_Chemistry")],
+            [InlineKeyboardButton("🧬 Biology", callback_data=f"ex_act_{grade}_Biology"), InlineKeyboardButton("📐 Maths", callback_data=f"ex_act_{grade}_Maths")]
+        ]
+
+    subs.append([InlineKeyboardButton("🔙 Back to Classes", callback_data="exam_mode")])
+    
+    await cb.message.edit_text(
+        f"📚 **CLASS {grade}TH PORTAL**\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        "Choose a subject to continue:\n",
+        reply_markup=InlineKeyboardMarkup(subs)
+    )
+
+# 📍 लेवल 3: एक्शन सिलेक्शन (क्या करना है?)
+@app.on_callback_query(filters.regex(r"^ex_act_(.*)_(.*)$"))
+async def exam_action_panel(client, cb):
+    grade = cb.matches[0].group(1)
+    subj = cb.matches[0].group(2)
+    await animate_transition(cb, f"Accessing {subj}")
+
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("🤖 AI Important Questions", callback_data=f"ex_ask_{grade}_{subj}")],
+        [InlineKeyboardButton("⏱️ Timed Mock Test", callback_data=f"ex_mock_{grade}_{subj}")],
+        [InlineKeyboardButton(f"🔙 Back to {grade}th Subjects", callback_data=f"ex_cls_{grade}")]
+    ])
+    await cb.message.edit_text(
+        f"🎯 **TARGET: {subj.upper()} ({grade}th)**\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        "Select your preparation tool:\n",
+        reply_markup=keyboard
+    )
+
+# 📍 लेवल 4: AI ट्रिगर (यूज़र से चैप्टर का नाम माँगना)
+@app.on_callback_query(filters.regex(r"^ex_ask_(.*)_(.*)$"))
+async def exam_ask_chapter(client, cb):
+    grade = cb.matches[0].group(1)
+    subj = cb.matches[0].group(2)
+    await animate_transition(cb, "Initializing AI Engine")
+
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton(f"🔙 Cancel & Go Back", callback_data=f"ex_act_{grade}_{subj}")]
+    ])
+    await cb.message.edit_text(
+        f"⚡ **AI ENGINE ACTIVATED** ⚡\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        f"**Target:** CBSE {grade}th {subj}\n\n"
+        f"✏️ **How to use:**\n"
+        f"To get the most important questions with a clean UI, type the command like this:\n\n"
+        f"`/topic {grade} {subj} [Chapter Name]`\n\n"
+        f"*(Example: /topic 9 Science Motion)*",
+        reply_markup=keyboard
+    )
+
+# 📍 लेवल 5: स्मार्ट AI जेनरेटर (कबाड़ साफ़ करने वाला फ़िल्टर + तगड़ा UI)
+@app.on_message(filters.command("topic"))
+async def generate_exam_topic(client, message):
+    try:
+        # कमांड को तोड़कर क्लास, सब्जेक्ट और चैप्टर निकालना
+        parts = message.text.split(" ", 3)
+        if len(parts) < 4:
+            return await message.reply("⚠️ **Format Error!** Please use: `/topic [Class] [Subject] [Chapter Name]`")
         
+        grade, subj, chapter = parts[1], parts[2], parts[3]
+        processing_msg = await message.reply("🔍 *Analyzing CBSE past papers and extracting top questions...* ⏳")
+
+        # 🌟 द अल्टीमेट स्ट्रिक्ट प्रॉम्प्ट (For Clean UI & Math)
+        sys_prompt = (
+            f"You are an Elite CBSE Board Examiner for {grade}th grade {subj}. "
+            f"Provide the 3 most important exam questions and their step-by-step solutions for the chapter: '{chapter}'. "
+            f"CRITICAL FORMATTING RULES:\n"
+            f"1. ZERO FLUFF: Answer directly. No introductory sentences.\n"
+            f"2. BULLET POINTS ONLY: Use the '•' symbol. Add a blank line (double enter) between every point.\n"
+            f"3. MATH FORMAT: NEVER use markdown code blocks (` or ```). NEVER use markdown headers (# or ##).\n"
+            f"4. USE UNICODE: Use real Unicode for math/science (e.g., ², ³, ×, ÷, ⁻¹, °, √, H₂O, CO₂). Never use ^ or * for math.\n"
+            f"5. STRUCTURE: Clearly label 'Q1:', 'Q2:', 'Q3:' and 'Solution:'."
+        )
+        
+        response = groq_client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": sys_prompt},
+                {"role": "user", "content": f"Generate important questions for chapter: {chapter}"}
+            ],
+            model="llama-3.3-70b-versatile",
+            temperature=0.2
+        )
+        
+        raw_answer = response.choices[0].message.content
+        
+        # 🧹 कबाड़ साफ़ करने वाला फ़िल्टर (डबल प्रोटेक्शन)
+        clean_answer = raw_answer.replace("###", "").replace("##", "").replace("#", "").replace("`", "")
+        
+        final_reply = (
+            f"📖 **{chapter.upper()} - CBSE {grade}TH {subj.upper()}**\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"{clean_answer}\n\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"🎓 *Engineered by Aditya | Elite AI Companion*"
+        )
+        
+        await processing_msg.edit_text(final_reply)
+
+    except Exception as e:
+        await message.reply(f"⚠️ **AI Generation Error:** `{str(e)}`")
     
 
 @app.on_callback_query(filters.regex(r"^exam_"))
