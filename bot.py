@@ -106,8 +106,18 @@ async def save_profile(client, cb):
         f"📚 **Subject:** {d[2]}\n━━━━━━━━━━━━━━━━━━━━\n"
         f"💡 *You are all set! Type any doubt, send a photo of a diagram, or record a voice note to get started.*"
     )
+    
+    try:
+        async for msg in app.get_chat_history(cb.message.chat.id, limit=5):
+            if msg.from_user.id == client.me.id and "Configuration Complete!" in msg.text:
+                if msg.id != cb.message.id:
+                    await msg.delete()
+    except:
+        pass
+    
     await cb.message.edit_text(success_msg)
     await cb.answer()
+    
     
 
 # --- 2. ADVANCED TEXT SOLVER (100% Clean UI & Crash-Proof Edition) ---
