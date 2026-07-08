@@ -45,6 +45,23 @@ def get_direct_video(query):
         pass
     return f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}"
 
+# --- ADMIN GATEWAY ---
+@app.on_message(filters.command("admin"))
+async def admin_gateway(client, message):
+    if not is_admin(message.from_user.id):
+        return 
+    
+    await message.reply(
+        "🛡️ **System Administrator Access Granted**\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        "The Elite Pro Max Interface is active.",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("📊 System Overview", callback_data="admin_stats")],
+            [InlineKeyboardButton("📢 Global Broadcast", callback_data="admin_broadcast")],
+            [InlineKeyboardButton("🔙 Return to Study Mode", callback_data="back_to_menu")]
+        ])
+    )
+    
 # --- 1. SMART START & CLASS SETUP ---
 
 async def send_welcome(client, message, is_callback=False):
