@@ -17,6 +17,7 @@ from config import API_ID, API_HASH, BOT_TOKEN, GEMINI_API_KEY, SYSTEM_PROMPT, Q
 import database as db
 from utils import generate_study_notes_pdf, safe_cleanup
 from features import get_ai_generated_quiz_from_image, get_ai_generated_quiz
+from keep_alive import keep_alive
 
 # --- INIT ---
 app = Client("study_companion_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
@@ -673,8 +674,9 @@ async def admin_action_processor(client, message):
 
 # --- MAIN RUNNER ---
 if __name__ == "__main__":
+    keep_alive()
     loop = asyncio.get_event_loop()
     loop.run_until_complete(db.init_db())
     print("🚀 Aditya's Elite AI Study Companion is LIVE on Secure Servers!")
     app.run()
-        
+    
