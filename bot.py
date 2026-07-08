@@ -273,21 +273,24 @@ async def imgquiz_callback(client, cb):
 # --- 6. VOICE PIPELINE (Clean UI Update) ---
 @app.on_message(filters.voice)
 async def voice_handler(client, message):
-    msg = await message.reply_text("🎧 *Audio received. Transcribing...* ⏳")
+    msg = await message.reply_text("🎙️ *Audio received. Transcribing...* ⏳")
     audio_path = None
     try:
         audio_path = await message.download()
         with open(audio_path, "rb") as file:
-            transcription = groq_client.audio.transcriptions.create(file=(audio_path, file.read()), model="whisper-large-v3", response_format="text")
+            transcription = groq_client.audio.transcriptions.create(
+                file=(audio_path, file.read()), model="whisper-large-v3"
+            )
         
-        user_question = transcription.strip()
-        if not user_question: return await msg.edit_text("⚠️ **Transcription failed. Please speak clearly.**")
-
-        await msg.edit_text(f"🗣️ *Transcribed Audio:* {user_question}\n\n🧠 *Generating expert response...* ⏳")
+        user_question = transcription.text.strip()
+        if not user_question:
+            return await msg.edit_text("⚠️ *Transcription failed. Please speak clearly.*")
+        
+        await msg.edit_text(f"🎙️ *Transcribed:* {user_question}\n\n🧠 *Generating expert response...* ⏳")
         
         # 🌟 STRICT BULLET-POINT PROMPT FOR VOICE 🌟
         sys_prompt = (
-            "You are an Elite AI Study Companion. Answer strictly in professional English. "
+            "You are an Elite AI Study Companion. Answer strictly in professional English.\n"
             "CRITICAL FORMATTING RULES:\n"
             "1. ZERO FLUFF: Answer directly using ONLY bullet points ('•'). No paragraphs.\n"
             "2. MATH FORMAT: NEVER use '^' or '*'. Use real Unicode (e.g., ², ³, ×, ÷).\n"
@@ -298,57 +301,44 @@ async def voice_handler(client, message):
         
         chat_completion = groq_client.chat.completions.create(
             messages=[
-                {"role": "system", "content": sys_prompt}, 
+                {"role": "system", "content": sys_prompt},
                 {"role": "user", "content": user_question}
             ],
-            model="llama-3.3-70b-versatile"
+            model="llama-3.3-70b-versatile",
+            temperature=0.1
         )
         
-        # कचरा साफ करने वाला फिल्टर
         raw_answer = chat_completion.choices[0].message.content
         clean_answer = raw_answer.replace("###", "").replace("##", "").replace("#", "").replace("`", "")
         
+        # 1. यूट्यूब वीडियो का लिंक जनरेट करना
+        youtube_link = await asyncio.to_thread(get_direct_video, user_question)
+
+        # 2. तुम्हारा परफेक्ट कीबोर्ड (आजू-बाजू वाले वीडियो और पीडीएफ बटन, और नीचे बैक बटन)
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link), InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")],
+            [InlineKeyboardButton("🔙 Back to Main Menu", callback_data="back_to_menu")]
+        ])
+
         final_reply = (
             f"🎙️ **AUDIO QUERY ANSWERED**\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"**Q:** {user_question}\n\n"
+            f"**Q:** *{user_question}*\n\n"
             f"{clean_answer}\n\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"👨‍💻 *Engineered by Aditya*\n"
             f"📸 [Follow on Instagram](https://www.instagram.com/aadit_paswan.007)"
         )
-
-    # यहाँ तुम्हारा final_reply खत्म हो रहा है
-    final_reply = (
-        f"🎙️ **AUDIO QUERY ANSWERED**\n"
-        f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"**Q:** *{user_question}*\n\n"
-        f"{clean_answer}\n\n"
-        f"━━━━━━━━━━━━━━━━━━━━\n"
-        f"👨‍💻 *Engineered by Aditya*\n"
-        f"📸 [Follow on Instagram](https://www.instagram.com/aadit_paswan.007)"
-    )
-    
-    # 1. यूट्यूब वीडियो का लिंक जनरेट करना
-    youtube_link = await asyncio.to_thread(get_direct_video, user_question)
-
-    # 2. तुम्हारा कीबोर्ड (आजू-बाजू वाले वीडियो और पीडीएफ बटन, और नीचे बैक बटन)
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link), InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")],
-        [InlineKeyboardButton("🔙 Back to Main Menu", callback_data="back_to_menu")]
-    ])
-
-    # 3. मैसेज को सेंड करना (reply_markup=keyboard के साथ)
-    await msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
-except Exception as e:
-    # ... (बाकी का कोड नीचे वैसा ही रहेगा)
-
         
-        await msg.edit_text(final_reply, disable_web_page_preview=True)
+        await msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
+        
+    # ⚠️ यह वाला हिस्सा डिलीट हो गया था, जिसे मैंने वापस एकदम सही जगह पर लगा दिया है 👇
     except Exception as e:
-        await msg.edit_text(f"⚠️ Audio Pipeline Error: `{str(e)}`")
+        await msg.edit_text(f"⚠️ *Audio Pipeline Error:* `{str(e)}`")
     finally:
-        if audio_path and os.path.exists(audio_path): os.remove(audio_path)
+        if audio_path and os.path.exists(audio_path):
+            os.remove(audio_path)
+    
     
 
 # --- 7. BASIC COMMANDS ---
