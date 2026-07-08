@@ -147,9 +147,10 @@ async def smart_solver(client, message):
         
         # 🔘 Interactive Buttons
         keyboard = InlineKeyboardMarkup([
-    [InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link), InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")],
-    [InlineKeyboardButton("🔙 Back to Main Menu", callback_data="back_to_menu")]
-])
+            [InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link), InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")],
+            [InlineKeyboardButton("🔙 Back to Main Menu", callback_data=f"back_to_menu_{message.id}")]
+         ])
+        
         
         
         # 📐 PERFECT LAYOUT: हेडर, बॉडी और फुटर एकदम सेट
@@ -209,7 +210,7 @@ async def vision_handler(client, message):
         
         chat_completion = groq_client.chat.completions.create(
             messages=[{"role": "user", "content": [{"type": "text", "text": ai_prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}],
-            model="llama-3.2-90b-vision-preview"
+            model="llama-3.2-11b-vision-preview"
         )
         
         raw_answer = chat_completion.choices[0].message.content
@@ -219,9 +220,10 @@ async def vision_handler(client, message):
         youtube_link = await asyncio.to_thread(get_direct_video, search_query)
         
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link), InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")],
-            [InlineKeyboardButton("🔙 Back to Main Menu", callback_data="back_to_menu")]
-        ])
+    [InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link), InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")],
+    [InlineKeyboardButton("🔙 Back to Main Menu", callback_data=f"back_to_menu_{message.id}")]
+])
+        
         
         final_reply = (
             f"📸 **VISUAL ANALYSIS REPORT**\n"
