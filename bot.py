@@ -217,21 +217,15 @@ async def vision_handler(client, message):
         raw_answer = chat_completion.choices[0].message.content
         clean_answer = raw_answer.replace("###", "").replace("##", "").replace("#", "").replace("`", "")
         
-        keyboard = InlineKeyboardMarkup([
 
-          # 1. पहले वीडियो लिंक जनरेट करो (बिना एरर के)
+        # 1. वीडियो लिंक जनरेट करना
         search_query = message.caption if message.caption else "Important educational concept"
         youtube_link = get_direct_video(search_query)
 
-        # 2. तुम्हारा परफेक्ट कीबोर्ड (आजू-बाजू और नीचे वाला)
+        # 2. परफेक्ट कीबोर्ड (ब्रैकेट्स एकदम क्लोज्ड और सेफ हैं)
         keyboard = InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link), 
-                InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")
-            ],
-            [
-                InlineKeyboardButton("🔙 Back to Main Menu", callback_data="back_to_menu")
-            ]
+            [InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link), InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")],
+            [InlineKeyboardButton("🔙 Back to Main Menu", callback_data="back_to_menu")]
         ])
         
         
