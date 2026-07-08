@@ -24,6 +24,13 @@ groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 user_profiles = {}
 
+# --- ADMIN SECURITY CONFIGURATION ---
+ADMIN_IDS = [7205857678] 
+
+def is_admin(user_id: int) -> bool:
+    return user_id in ADMIN_IDS
+    
+
 # --- YOUTUBE SCRAPER (This was missing) ---
 def get_direct_video(query):
     import urllib.request, urllib.parse, re
