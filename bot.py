@@ -147,9 +147,10 @@ async def smart_solver(client, message):
         
         # 🔘 Interactive Buttons
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link),
-             InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")]
-        ])
+    [InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link), InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")],
+    [InlineKeyboardButton("🔙 Back to Main Menu", callback_data="back_to_menu")]
+])
+        
         
         # 📐 PERFECT LAYOUT: हेडर, बॉडी और फुटर एकदम सेट
         final_reply = (
@@ -216,7 +217,23 @@ async def vision_handler(client, message):
         raw_answer = chat_completion.choices[0].message.content
         clean_answer = raw_answer.replace("###", "").replace("##", "").replace("#", "").replace("`", "")
         
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🧠 Generate Quick Quiz from Image", callback_data=f"imgquiz_{message.id}")]])
+        keyboard = InlineKeyboardMarkup([
+
+          # 1. पहले वीडियो लिंक जनरेट करो (बिना एरर के)
+        search_query = message.caption if message.caption else "Important educational concept"
+        youtube_link = get_direct_video(search_query)
+
+        # 2. तुम्हारा परफेक्ट कीबोर्ड (आजू-बाजू और नीचे वाला)
+        keyboard = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link), 
+                InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")
+            ],
+            [
+                InlineKeyboardButton("🔙 Back to Main Menu", callback_data="back_to_menu")
+            ]
+        ])
+        
         
         final_reply = (
             f"🖼️ **VISUAL ANALYSIS REPORT**\n"
@@ -309,6 +326,33 @@ async def voice_handler(client, message):
             f"👨‍💻 *Engineered by Aditya*\n"
             f"📸 [Follow on Instagram](https://www.instagram.com/aadit_paswan.007)"
         )
+
+    # यहाँ तुम्हारा final_reply खत्म हो रहा है
+    final_reply = (
+        f"🎙️ **AUDIO QUERY ANSWERED**\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"**Q:** *{user_question}*\n\n"
+        f"{clean_answer}\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"👨‍💻 *Engineered by Aditya*\n"
+        f"📸 [Follow on Instagram](https://www.instagram.com/aadit_paswan.007)"
+    )
+    
+    # 1. यूट्यूब वीडियो का लिंक जनरेट करना
+    youtube_link = await asyncio.to_thread(get_direct_video, user_question)
+
+    # 2. तुम्हारा कीबोर्ड (आजू-बाजू वाले वीडियो और पीडीएफ बटन, और नीचे बैक बटन)
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link), InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")],
+        [InlineKeyboardButton("🔙 Back to Main Menu", callback_data="back_to_menu")]
+    ])
+
+    # 3. मैसेज को सेंड करना (reply_markup=keyboard के साथ)
+    await msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
+except Exception as e:
+    # ... (बाकी का कोड नीचे वैसा ही रहेगा)
+
+        
         await msg.edit_text(final_reply, disable_web_page_preview=True)
     except Exception as e:
         await msg.edit_text(f"⚠️ Audio Pipeline Error: `{str(e)}`")
