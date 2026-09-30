@@ -2,7 +2,7 @@ import random
 from groq import Groq
 
 # अपनी API Key यहाँ रखना मत भूलना
-client = Groq(api_key="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") 
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 def get_ai_generated_quiz(student_class):
     # AI को एकदम सख्त निर्देश कि फॉर्मेट कैसा होना चाहिए
