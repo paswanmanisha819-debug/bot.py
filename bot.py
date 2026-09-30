@@ -186,7 +186,7 @@ async def smart_solver(client, message):
         
         chat_completion = groq_client.chat.completions.create(
             messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": message.text}],
-            model="llama-3.1-70b-versatile"
+            model="llama-3.1-70b-versatile",
             temperature=0.1
         )
         
@@ -368,7 +368,7 @@ async def voice_handler(client, message):
                 {"role": "system", "content": sys_prompt},
                 {"role": "user", "content": user_question}
             ],
-            model="llama-3.1-70b-versatile"
+            model="llama-3.1-70b-versatile",
             temperature=0.1
         )
         
@@ -536,7 +536,7 @@ async def generate_exam_topic(client, message):
                 {"role": "system", "content": sys_prompt},
                 {"role": "user", "content": f"Generate important questions for chapter: {chapter}"}
             ],
-            model="llama-3.1-70b-versatile"
+            model="llama-3.1-70b-versatile",
             temperature=0.2
         )
         
