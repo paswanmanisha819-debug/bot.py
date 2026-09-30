@@ -224,12 +224,13 @@ async def smart_solver(client, message):
             f"📸 [Follow on Instagram](https://www.instagram.com/aadit_paswan.007)"
         )
         
-        # 🚀 Send the message safely
+        # 🚀 Send the message safely (This blocks the 400 Error Crash)
+    try:
         await processing_msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
-        
     except Exception as e:
-        await processing_msg.edit_text(f"⚠️ *System Error:* `{str(e)}`")
-        
+        if "MESSAGE_NOT_MODIFIED" not in str(e):
+        await message.reply(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
+                
 # --- 3. PDF GENERATION (Unchanged & Safe) ---
 @app.on_callback_query(filters.regex(r"^gen_pdf_"))
 async def handle_pdf_generation(client, cb):
