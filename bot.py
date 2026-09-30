@@ -25,6 +25,12 @@ groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 user_profiles = {}
 
+
+
+CHAT_MODEL = "openai/gpt-oss-120b"
+FAST_MODEL = "openai/gpt-oss-20b"
+VISION_MODEL = "qwen/qwen3.8-27b"
+
 # --- ADMIN SECURITY CONFIGURATION ---
 ADMIN_IDS = [7205857678] 
 
@@ -186,7 +192,7 @@ async def smart_solver(client, message):
         
         chat_completion = groq_client.chat.completions.create(
             messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": message.text}],
-            model="llama-3.1-70b-versatile",
+            model=CHAT_MODEL,
             temperature=0.1
         )
         
@@ -340,7 +346,7 @@ async def voice_handler(client, message):
         audio_path = await message.download()
         with open(audio_path, "rb") as file:
             transcription = groq_client.audio.transcriptions.create(
-                file=(audio_path, file.read()), model="whisper-large-v3"
+                file=(audio_path, file.read()), model=CHAT_MODEL,
             )
         
         user_question = transcription.text.strip()
@@ -368,7 +374,7 @@ async def voice_handler(client, message):
                 {"role": "system", "content": sys_prompt},
                 {"role": "user", "content": user_question}
             ],
-            model="llama-3.1-70b-versatile",
+            model=VISION_MODEL,
             temperature=0.1
         )
         
@@ -536,7 +542,7 @@ async def generate_exam_topic(client, message):
                 {"role": "system", "content": sys_prompt},
                 {"role": "user", "content": f"Generate important questions for chapter: {chapter}"}
             ],
-            model="llama-3.1-70b-versatile",
+            model=CHAT_MODEL,
             temperature=0.2
         )
         
