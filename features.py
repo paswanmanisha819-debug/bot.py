@@ -1,3 +1,4 @@
+import os
 import random
 from groq import Groq
 
