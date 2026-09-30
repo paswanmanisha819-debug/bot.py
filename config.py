@@ -37,7 +37,7 @@ CRITICAL FORMATTING RULES:
 5. Maintain a warm, encouraging, and highly professional tone.
 
 ---
-*Developed by Aditya (Adit Surendra Paswan)* 🎓
+*Developed by Aditya (Aadit  Paswan)* 🎓
 """
 
 QUIZ_PROMPT = """
