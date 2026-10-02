@@ -223,8 +223,8 @@ async def smart_solver(client, message):
             f"👨‍💻 *Engineered by Aditya*\n"
             f"📸 [Follow on Instagram](https://www.instagram.com/aadit_paswan.007)"
         )
-        
-            # 🚀 Send the message safely (This blocks the 400 Error Crash)
+
+        # 🚀 Send the message safely (This blocks the 400 Error Crash)
         try:
             await processing_msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
         except Exception as e:
