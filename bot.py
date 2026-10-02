@@ -851,8 +851,95 @@ async def initialize_quiz_arena(client, message):
         ])
         
         battle_msg = await loading_msg.edit_text(arena_ui, reply_markup=keyboard)
+
+# --- 6. ADVANCED MULTIPLAYER QUIZ ARENA (LIVE COUNTER ENGINE) ---
+
+@app.on_message(filters.command(["battle", "quiz"]))
+async def initialize_quiz_arena(client, message):
+    user_id = message.from_user.id
+    
+    # Dynamic Profiling: Fetching user grade and preferred subject
+    user_data = user_profiles.get(user_id, {})
+    student_grade = user_data.get("class", "10th Grade") 
+    
+    # Command parsing for custom topics (e.g., /battle Physics)
+    command_args = message.text.split(" ", 1)
+    topic = command_args[1] if len(command_args) > 1 else user_data.get("subject", "General Science")
+    
+    # System Boot Sequence UI
+    loading_msg = await message.reply_text("⚡ *Initializing Elite Battle Arena...*\n_Establishing secure connection to AI Core..._ ⏳")
+    
+    try:
+        from groq import Groq
+        groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
         
-        # Execution Delay (Timer)
+        # Master-Level AI Prompt for High-Quality Conceptual Queries
+        prompt = (
+            f"Act as an Elite Academic Assessor. Generate 1 highly conceptual, challenging multiple-choice question "
+            f"for a {student_grade} CBSE student focusing exclusively on: '{topic}'. "
+            f"The question must test deep logical understanding, not just rote memorization. "
+            f"STRICT OUTPUT FORMAT REQUIRED (Do not add any conversational text):\n"
+            f"Q: [Question Text]\n"
+            f"A: [Option A]\n"
+            f"B: [Option B]\n"
+            f"C: [Option C]\n"
+            f"D: [Option D]\n"
+            f"ANS: [A, B, C, or D]\n"
+            f"EXP: [Brief, highly informative explanation]"
+        )
+        
+        response = groq_client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama3-8b-8192", 
+            temperature=0.75,
+            max_tokens=300
+        )
+        
+        raw_text = response.choices[0].message.content
+        
+        # Robust Parsing Engine
+        q = re.search(r'Q:\s*(.+)', raw_text, re.IGNORECASE).group(1).strip()
+        opt_a = re.search(r'A:\s*(.+)', raw_text, re.IGNORECASE).group(1).strip()
+        opt_b = re.search(r'B:\s*(.+)', raw_text, re.IGNORECASE).group(1).strip()
+        opt_c = re.search(r'C:\s*(.+)', raw_text, re.IGNORECASE).group(1).strip()
+        opt_d = re.search(r'D:\s*(.+)', raw_text, re.IGNORECASE).group(1).strip()
+        ans = re.search(r'ANS:\s*([A-D])', raw_text, re.IGNORECASE).group(1).strip().upper()
+        exp = re.search(r'EXP:\s*(.+)', raw_text, re.IGNORECASE).group(1).strip()
+        
+        # Session Generation
+        battle_id = str(uuid.uuid4())[:8]
+        
+        # Premium Dashboard Base UI
+        arena_ui = (
+            f"🔥 **ELITE MULTIPLAYER ARENA** 🔥\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🎓 **Level:** `{student_grade}` | 📚 **Domain:** `{topic.upper()}`\n\n"
+            f"🎯 **Challenge:**\n_{q}_\n\n"
+            f"🔘 **A:** {opt_a}\n"
+            f"🔘 **B:** {opt_b}\n"
+            f"🔘 **C:** {opt_c}\n"
+            f"🔘 **D:** {opt_d}\n\n"
+            f"⏱️ _15 Seconds on the clock. Lock your trajectory!_"
+        )
+        
+        # Interactive Control Panel
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("🅰️ Option A", callback_data=f"bat_{battle_id}_A"), InlineKeyboardButton("🅱️ Option B", callback_data=f"bat_{battle_id}_B")],
+            [InlineKeyboardButton("🇨 Option C", callback_data=f"bat_{battle_id}_C"), InlineKeyboardButton("🇩 Option D", callback_data=f"bat_{battle_id}_D")]
+        ])
+        
+        battle_msg = await loading_msg.edit_text(arena_ui, reply_markup=keyboard)
+        
+        # Secure State Registration (Saved with base_text for live updates)
+        active_battles[battle_id] = {
+            "correct_ans": ans,
+            "explanation": exp,
+            "participants": {},
+            "active": True,
+            "base_text": arena_ui
+        }
+        
+        # Execution Delay (Timer for group participation)
         await asyncio.sleep(15)
         
         # Pre-emption Check (If manually terminated)
@@ -881,8 +968,8 @@ async def initialize_quiz_arena(client, message):
             f"✅ **Verified Answer:** `{ans}`\n"
             f"💡 **Insight:** _{exp}_\n\n"
             f"📊 **Arena Analytics:**\n"
-            f"• Total Operatives: `{total_players}`\n"
-            f"• Accuracy Rate: `{accuracy}%`\n\n"
+            f"• Total Operatives Voted: `{total_players}`\n"
+            f"• Group Accuracy Rate: `{accuracy}%`\n\n"
             f"{win_display}\n"
             f"━━━━━━━━━━━━━━━━━━━━━\n"
             f"⚙️ _Engineered by Aditya's Elite AI_"
@@ -897,7 +984,7 @@ async def initialize_quiz_arena(client, message):
         await loading_msg.edit_text(f"⚠️ **System Exception:** Failed to compile arena parameters.\n`Trace: {str(e)}`")
 
 
-# 🖱️ ANTI-CHEAT EVENT LISTENER
+# 🖱️ LIVE VOTING & ANTI-CHEAT LISTENER
 @app.on_callback_query(filters.regex(r"^bat_"))
 async def battle_callback_manager(client, callback_query):
     parts = callback_query.data.split("_")
@@ -923,9 +1010,19 @@ async def battle_callback_manager(client, callback_query):
         "name": user.first_name
     }
     
+    # Dynamic UI Update (Live Counter)
+    total_votes = len(battle_session["participants"])
+    live_update_text = battle_session["base_text"] + f"\n\n👥 **Operatives Locked In:** `{total_votes}`"
+    
+    try:
+        await callback_query.message.edit_text(live_update_text, reply_markup=callback_query.message.reply_markup)
+    except Exception:
+        pass # Ignore floodwaits on rapid clicks
+    
     # Stealth Confirmation
     await callback_query.answer(f"✅ Trajectory Locked: Option {choice} registered.", show_alert=False)
         
+
 
 # --- MAIN RUNNER ---
 if __name__ == "__main__":
