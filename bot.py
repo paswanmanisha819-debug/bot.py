@@ -165,8 +165,10 @@ async def save_profile(client, cb):
 @app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space"]))
 async def smart_solver(client, message):
     uid = message.from_user.id
+    
+    # 🚀 FINAL FIX: अगर बॉट मेमोरी भूल जाए, तो एरर मत दो, सीधा डिफ़ॉल्ट सेट कर दो!
     if uid not in user_profiles: 
-        return await message.reply("⚠️ **Please use the `/setup` command first.**")
+        user_profiles[uid] = {"class": "9", "subject": "Science"}
     
     u = user_profiles[uid]
     processing_msg = await message.reply("🔍 *Analyzing your query for a perfect answer...* ⏳")
