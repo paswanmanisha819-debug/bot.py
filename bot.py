@@ -26,10 +26,18 @@ groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 user_profiles = {}
 
 
-
+# चैट और सवालों के जवाब के लिए (क्योंकि Llama 70B बंद हो चुका है)
 CHAT_MODEL = "openai/gpt-oss-120b"
+
+# तेज़ जवाब के लिए (क्योंकि Llama 8B बंद हो चुका है)
 FAST_MODEL = "openai/gpt-oss-20b"
+
+# फोटो देखने के लिए (क्योंकि Llama-4-Scout 17 जुलाई 2026 को बंद हो चुका है)
 VISION_MODEL = "qwen/qwen3.8-27b"
+
+# वॉइस (ऑडियो) ट्रांसक्रिप्ट के लिए 
+AUDIO_MODEL = "whisper-large-v3-turbo"
+
 
 # --- ADMIN SECURITY CONFIGURATION ---
 ADMIN_IDS = [7205857678] 
