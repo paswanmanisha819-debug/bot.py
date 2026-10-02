@@ -41,7 +41,7 @@ def add_header_footer(canvas, doc):
     canvas.restoreState()
 
 
-# 🚀 2. THE ULTIMATE RICH-UI SMART PDF GENERATOR
+# 🚀 2. THE ULTIMATE RICH-UI SMART PDF GENERATOR (BUG-FREE WIDTH)
 def generate_study_notes_pdf(user_id: int, topic: str, text_content: str) -> str:
     # 🧹 Clean emojis & markdown asterisks to prevent ReportLab crashes
     clean_text = re.sub(r'[^\x00-\x7F]+', ' ', text_content)
@@ -79,7 +79,7 @@ def generate_study_notes_pdf(user_id: int, topic: str, text_content: str) -> str
         fontName='Helvetica',
         fontSize=10.5,
         leading=16,
-        textColor=colors.HexColor('#1E293B') # Deep rich slate for ultra-clear reading
+        textColor=colors.HexColor('#1E293B')
     )
     
     subheading_style = ParagraphStyle(
@@ -88,7 +88,7 @@ def generate_study_notes_pdf(user_id: int, topic: str, text_content: str) -> str
         fontName='Helvetica-Bold',
         fontSize=13,
         leading=18,
-        textColor=colors.HexColor('#2563EB'), # Vibrant Royal Blue
+        textColor=colors.HexColor('#2563EB'),
         spaceBefore=14,
         spaceAfter=6
     )
@@ -121,62 +121,61 @@ def generate_study_notes_pdf(user_id: int, topic: str, text_content: str) -> str
             story.append(Paragraph(f"✨ <b>{line}</b>", subheading_style))
             story.append(Spacer(1, 4))
             
-        # 2. Detect Quick Summary -> Wrap in a Mint-Green Highlight Box
+        # 2. Detect Quick Summary -> Wrap in a Mint-Green Highlight Box (Width fixed to 500)
         elif line.startswith('Quick Summary'):
             summary_p = Paragraph(f"<b>💡 SMART SUMMARY:</b> {line.replace('Quick Summary:', '').strip()}", summary_style)
-            summary_table = Table([[summary_p]], colWidths=[532])
+            summary_table = Table([[summary_p]], colWidths=[500])
             summary_table.setStyle(TableStyle([
-                ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#ECFDF5")), # Soft Mint Green
-                ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#34D399")),     # Emerald Border
-                ('TOPPADDING', (0,0), (-1,-1), 9),
-                ('BOTTOMPADDING', (0,0), (-1,-1), 9),
-                ('LEFTPADDING', (0,0), (-1,-1), 12),
-                ('RIGHTPADDING', (0,0), (-1,-1), 12),
+                ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#ECFDF5")),
+                ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#34D399")),
+                ('TOPPADDING', (0,0), (-1,-1), 8),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 8),
+                ('LEFTPADDING', (0,0), (-1,-1), 10),
+                ('RIGHTPADDING', (0,0), (-1,-1), 10),
             ]))
             story.append(Spacer(1, 6))
             story.append(summary_table)
             story.append(Spacer(1, 10))
             
-        # 3. Detect Tabular Data (Lines with colons like "Vitamin A: Milk, carrots") -> Creates 2-Column Grid Table
+        # 3. Detect Tabular Data -> 2-Column Grid Table (Width fixed to 130 + 370 = 500)
         elif ':' in line and not line.startswith('http') and len(line.split(':', 1)[0]) < 35:
             parts = line.split(':', 1)
             col1 = Paragraph(f"<b>{parts[0].strip()}</b>", body_style)
             col2 = Paragraph(parts[1].strip(), body_style)
             
-            row_table = Table([[col1, col2]], colWidths=[150, 382])
+            row_table = Table([[col1, col2]], colWidths=[130, 370])
             row_table.setStyle(TableStyle([
                 ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
                 ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
                 ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
                 ('TOPPADDING', (0,0), (-1,-1), 6),
                 ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-                ('LEFTPADDING', (0,0), (-1,-1), 10),
-                ('RIGHTPADDING', (0,0), (-1,-1), 10),
+                ('LEFTPADDING', (0,0), (-1,-1), 8),
+                ('RIGHTPADDING', (0,0), (-1,-1), 8),
             ]))
             story.append(row_table)
             story.append(Spacer(1, 4))
             
-        # 4. Standard Text Points -> Packaged into Ultra-Modern Cards with Left Accent Bar
+        # 4. Standard Text Points -> Ultra-Modern Cards with Left Accent Bar (Width fixed to 6 + 494 = 500)
         else:
             p = Paragraph(line, body_style)
-            # Creating a 2-column micro-table to add a beautiful blue left border line (Accent Bar)
             accent_bar = Table([['']], colWidths=[4], rowHeights=[None])
             accent_bar.setStyle(TableStyle([
-                ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#2563EB")) # Royal Blue Left Bar
+                ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#2563EB"))
             ]))
             
-            content_table = Table([[accent_bar, p]], colWidths=[6, 520])
+            content_table = Table([[accent_bar, p]], colWidths=[6, 494])
             content_table.setStyle(TableStyle([
-                ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")), # Light Slate Background
-                ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#E2E8F0")),  # Subtle outer border
+                ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
+                ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#E2E8F0")),
                 ('VALIGN', (0,0), (-1,-1), 'TOP'),
-                ('TOPPADDING', (0,0), (-1,-1), 6),
-                ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-                ('LEFTPADDING', (0,0), (-1,-1), 6),
-                ('RIGHTPADDING', (0,0), (-1,-1), 10),
+                ('TOPPADDING', (0,0), (-1,-1), 5),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+                ('LEFTPADDING', (0,0), (-1,-1), 5),
+                ('RIGHTPADDING', (0,0), (-1,-1), 8),
             ]))
             story.append(content_table)
-            story.append(Spacer(1, 5))
+            story.append(Spacer(1, 4))
 
     # Build the final PDF document
     doc.build(story, onFirstPage=add_header_footer, onLaterPages=add_header_footer)
@@ -193,4 +192,4 @@ def safe_cleanup(file_path: str):
             os.remove(file_path)
     except Exception as e:
         print(f"Error cleaning file: {e}")
-    
+                             
