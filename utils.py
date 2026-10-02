@@ -6,7 +6,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from config import TEMP_DIR
 
-# 🎨 1. ULTRA-ADVANCED PROFESSIONAL HEADER & FOOTER CANVAS
+# 🎨 1. ULTRA-ADVANCED PROFESSIONAL HEADER & FOOTER
 def add_header_footer(canvas, doc):
     canvas.saveState()
     
@@ -41,11 +41,13 @@ def add_header_footer(canvas, doc):
     canvas.restoreState()
 
 
-# 🚀 2. THE ULTIMATE RICH-UI SMART PDF GENERATOR (100% CRASH-PROOF)
+# 🚀 2. THE ULTIMATE RICH-UI SMART PDF GENERATOR (Fixes Markdown & Tables)
 def generate_study_notes_pdf(user_id: int, topic: str, text_content: str) -> str:
-    # 🧹 Clean emojis & markdown asterisks to prevent ReportLab crashes
-    clean_text = re.sub(r'[^\x00-\x7F]+', ' ', text_content)
-    clean_text = clean_text.replace('**', '')
+    # 🧹 SMART CLEANUP: Converts Markdown **bold** to real PDF <b>bold</b>
+    clean_text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text_content)
+    
+    # Remove unsupported weird unicode but keep basic formatting and table pipes (|)
+    clean_text = re.sub(r'[^\x00-\x7F\xa9\xae]+', ' ', clean_text)
     
     if not os.path.exists(TEMP_DIR):
         os.makedirs(TEMP_DIR)
@@ -62,73 +64,60 @@ def generate_study_notes_pdf(user_id: int, topic: str, text_content: str) -> str
 
     styles = getSampleStyleSheet()
     
-    # 💎 ELITE TYPOGRAPHY & RICH TEXT STYLES
+    # 💎 ELITE TYPOGRAPHY
     title_style = ParagraphStyle(
-        name='EliteDocTitle',
-        parent=styles['Heading1'],
-        fontName='Helvetica-Bold',
-        fontSize=15,
-        leading=22,
-        textColor=colors.HexColor('#1E3A8A'),
-        spaceAfter=12
+        name='EliteDocTitle', parent=styles['Heading1'], fontName='Helvetica-Bold',
+        fontSize=15, leading=22, textColor=colors.HexColor('#1E3A8A'), spaceAfter=12
     )
 
     body_style = ParagraphStyle(
-        name='EliteBodyText',
-        parent=styles['BodyText'],
-        fontName='Helvetica',
-        fontSize=10.5,
-        leading=16,
-        textColor=colors.HexColor('#1E293B') # Deep rich slate for clear reading
+        name='EliteBodyText', parent=styles['BodyText'], fontName='Helvetica',
+        fontSize=10.5, leading=16, textColor=colors.HexColor('#1E293B')
     )
     
     subheading_style = ParagraphStyle(
-        name='EliteSubhead',
-        parent=styles['Heading2'],
-        fontName='Helvetica-Bold',
-        fontSize=13,
-        leading=18,
-        textColor=colors.HexColor('#2563EB'), # Vibrant Royal Blue
-        spaceBefore=14,
-        spaceAfter=6
+        name='EliteSubhead', parent=styles['Heading2'], fontName='Helvetica-Bold',
+        fontSize=13, leading=18, textColor=colors.HexColor('#2563EB'),
+        spaceBefore=14, spaceAfter=6
     )
     
     summary_style = ParagraphStyle(
-        name='EliteSummary',
-        parent=styles['BodyText'],
-        fontName='Helvetica-Bold',
-        fontSize=10,
-        leading=15,
-        textColor=colors.HexColor('#065F46')
+        name='EliteSummary', parent=styles['BodyText'], fontName='Helvetica-Bold',
+        fontSize=10.5, leading=16, textColor=colors.HexColor('#065F46')
     )
 
     story = []
 
-    # Main Document Subject Title Banner
+    # Main Document Banner
     safe_topic = topic[:65] + "..." if len(topic) > 65 else topic
     story.append(Paragraph(f"<b>MODULE TOPIC:</b> {safe_topic}", title_style))
     story.append(Spacer(1, 6))
 
-    # 🧠 RICH UI PARSER: Converts lines into Color-Accented Cards, Tables, and Highlights
+    # 🧠 RICH UI PARSER: Intelligently handles Tables (|), Cards, and Summaries
     for line in clean_text.split('\n'):
         line = line.strip()
         if not line:
             continue
             
-        # 1. Detect Page Headings
-        if line.startswith(('Page 1', 'Page 2', 'Page 3', 'Page 4', 'Page 5', 'Page 6')):
+        # Ignore raw markdown table divider lines (e.g., |---|---|)
+        if re.match(r'^[\s\|\-]+$', line) and len(line) > 3:
+            continue
+            
+        # 1. Detect Headings
+        if line.startswith('Page ') or line.startswith('#'):
+            clean_heading = line.replace('#', '').strip()
             story.append(Spacer(1, 10))
-            story.append(Paragraph(f"✨ <b>{line}</b>", subheading_style))
+            story.append(Paragraph(f"✨ <b>{clean_heading}</b>", subheading_style))
             story.append(Spacer(1, 4))
             
-        # 2. Detect Quick Summary -> Wrap in a Mint-Green Highlight Box with Thick Green Border
-        elif line.startswith('Quick Summary'):
-            summary_p = Paragraph(f"<b>💡 SMART SUMMARY:</b> {line.replace('Quick Summary:', '').strip()}", summary_style)
+        # 2. Detect Smart Summary (Green Box)
+        elif 'SUMMARY' in line.upper():
+            summary_p = Paragraph(f"<b>💡 {line.replace('SUMMARY:', '').strip()}</b>", summary_style)
             summary_table = Table([[summary_p]], colWidths=[532])
             summary_table.setStyle(TableStyle([
                 ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#ECFDF5")),
                 ('BOX', (0,0), (-1,-1), 1, colors.HexColor("#34D399")),
-                ('LINEBEFORE', (0,0), (-1,-1), 5, colors.HexColor("#059669")), # Thick Green Left Accent
+                ('LINEBEFORE', (0,0), (-1,-1), 5, colors.HexColor("#059669")),
                 ('TOPPADDING', (0,0), (-1,-1), 10),
                 ('BOTTOMPADDING', (0,0), (-1,-1), 10),
                 ('LEFTPADDING', (0,0), (-1,-1), 12),
@@ -138,34 +127,41 @@ def generate_study_notes_pdf(user_id: int, topic: str, text_content: str) -> str
             story.append(summary_table)
             story.append(Spacer(1, 10))
             
-        # 3. Detect Tabular Data -> Creates 2-Column Grid Table
-        elif ':' in line and not line.startswith('http') and len(line.split(':', 1)[0]) < 35:
-            parts = line.split(':', 1)
-            col1 = Paragraph(f"<b>{parts[0].strip()}</b>", body_style)
-            col2 = Paragraph(parts[1].strip(), body_style)
+        # 3. Detect Markdown Tables (Lines containing '|')
+        elif '|' in line:
+            # Extract cells by splitting via '|' and remove empty edge spaces
+            cells = [c.strip() for c in line.split('|') if c.strip()]
+            if not cells:
+                continue
+                
+            # Convert cells to Paragraphs for text-wrapping
+            p_cells = [Paragraph(c, body_style) for c in cells]
             
-            row_table = Table([[col1, col2]], colWidths=[142, 390]) # Total Width = 532
+            # Auto-calculate width so it fits perfectly on the 532px page
+            col_width = 532 / len(cells)
+            
+            row_table = Table([p_cells], colWidths=[col_width] * len(cells))
             row_table.setStyle(TableStyle([
                 ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
                 ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
-                ('LINEBEFORE', (0,0), (-1,-1), 3, colors.HexColor("#8B5CF6")), # Purple Left Accent for tables
+                ('INNERGRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")), # Grid lines inside table
                 ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-                ('TOPPADDING', (0,0), (-1,-1), 8),
-                ('BOTTOMPADDING', (0,0), (-1,-1), 8),
-                ('LEFTPADDING', (0,0), (-1,-1), 10),
-                ('RIGHTPADDING', (0,0), (-1,-1), 10),
+                ('TOPPADDING', (0,0), (-1,-1), 6),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+                ('LEFTPADDING', (0,0), (-1,-1), 8),
+                ('RIGHTPADDING', (0,0), (-1,-1), 8),
             ]))
             story.append(row_table)
-            story.append(Spacer(1, 4))
+            story.append(Spacer(1, 2))
             
-        # 4. Standard Text Points -> Ultra-Modern Cards with Royal Blue Accent Bar
+        # 4. Standard Text -> Ultra-Modern Blue Accent Cards
         else:
             p = Paragraph(line, body_style)
             content_table = Table([[p]], colWidths=[532])
             content_table.setStyle(TableStyle([
                 ('BACKGROUND', (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
                 ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor("#E2E8F0")),
-                ('LINEBEFORE', (0,0), (-1,-1), 4, colors.HexColor("#2563EB")), # Royal Blue Thick Accent Bar (Replaces Nested Table)
+                ('LINEBEFORE', (0,0), (-1,-1), 4, colors.HexColor("#2563EB")), 
                 ('VALIGN', (0,0), (-1,-1), 'TOP'),
                 ('TOPPADDING', (0,0), (-1,-1), 8),
                 ('BOTTOMPADDING', (0,0), (-1,-1), 8),
@@ -173,20 +169,17 @@ def generate_study_notes_pdf(user_id: int, topic: str, text_content: str) -> str
                 ('RIGHTPADDING', (0,0), (-1,-1), 12),
             ]))
             story.append(content_table)
-            story.append(Spacer(1, 5))
+            story.append(Spacer(1, 4))
 
-    # Build the final PDF document
     doc.build(story, onFirstPage=add_header_footer, onLaterPages=add_header_footer)
     return file_path
 
 
-# 🛡️ 3. SAFE CLEANUP FUNCTION (CRITICAL SERVER SAFETY)
+# 🛡️ 3. SAFE CLEANUP FUNCTION
 def safe_cleanup(file_path: str):
-    """
-    Safely removes transient system files to mitigate runtime disk consumption.
-    """
     try:
         if file_path and os.path.exists(file_path):
             os.remove(file_path)
     except Exception as e:
         print(f"Error cleaning file: {e}")
+    
