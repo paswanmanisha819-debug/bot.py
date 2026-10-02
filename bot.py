@@ -548,7 +548,7 @@ async def generate_exam_topic(client, message):
                 {"role": "system", "content": sys_prompt},
                 {"role": "user", "content": f"Generate important questions for chapter: {chapter}"}
             ],
-            model="whisper-large-v3-turbo"
+            model="whisper-large-v3-turbo",
             temperature=0.2
         )
         
