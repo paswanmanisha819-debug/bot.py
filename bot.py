@@ -1023,7 +1023,6 @@ async def battle_callback_manager(client, callback_query):
     await callback_query.answer(f"✅ Trajectory Locked: Option {choice} registered.", show_alert=False)
         
 
-
 # --- MAIN RUNNER ---
 if __name__ == "__main__":
     keep_alive()
