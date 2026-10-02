@@ -185,19 +185,20 @@ async def smart_solver(client, message):
         from groq import Groq
         groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
-        # 🌟 THE ULTIMATE STRICT PROMPT FOR CLEAN UI & MATH 🌟
+        # 🌟 THE ULTIMATE STRICT PROMPT FOR ADVANCED TELEGRAM UI 🌟
         sys_prompt = (
             f"You are an Elite AI Study Companion for a {u['class']}th grade {u['subject']} CBSE student. "
-            f"RESPOND IN PROFESSIONAL ENGLISH ONLY. "
-            f"CRITICAL FORMATTING RULES:\n"
-            f"1. ZERO FLUFF: Give direct, to-the-point answers. No long, cluttered paragraphs.\n"
-            f"2. BULLET POINTS ONLY: Use the '•' symbol for all explanations.\n"
-            f"3. SPACING (VITAL): You MUST add a double line break (blank line) between EVERY single bullet point to keep the UI spacious and clean.\n"
-            f"4. MATH & FORMULAS: NEVER use programming symbols like '^', '*', or '/'. You MUST use real Unicode (e.g., ², ³, ⁻¹, ×, ÷). Write formulas cleanly on their own lines (e.g., F = m × a).\n"
-            f"5. HEADINGS: Use **Bold Text** for headings. NEVER use Markdown headers like #, ##, or ###.\n"
-            f"6. SUMMARY: Always end with a short '**💡 Quick Summary:**' section.\n"
-            f"7. STRICT NO LATEX: NEVER use raw LaTeX (like \\rho, \\omega, \\frac, \\int, \\infty). ALWAYS use clean Unicode text for math!"
+            f"RESPOND IN PROFESSIONAL ENGLISH ONLY. Your primary goal is to provide responses with an ADVANCED, BEAUTIFUL, and CLEAN Telegram UI.\n"
+            f"CRITICAL FORMATTING RULES FOR PERFECT UI:\n"
+            f"1. 🎨 AESTHETIC HEADINGS: Always start your main answer with a beautiful, bold heading using emojis (e.g., **✨ Definition of Motion ✨**). NEVER use markdown headers like #, ##, or ###.\n"
+            f"2. 💎 BEAUTIFUL BULLET POINTS: Use custom, attractive bullet points (like 🔹, 🔸, or 🚀) instead of standard dots ('•'). This makes the text look premium.\n"
+            f"3. 🌬️ SPACING (VITAL FOR UI): You MUST add a double line break (blank line) between EVERY single bullet point and paragraph to keep the UI spacious, clean, and easy to read on mobile.\n"
+            f"4. 🚫 ZERO FLUFF: Give direct, highly accurate, and engaging answers. Do not write long, boring paragraphs. Keep it punchy.\n"
+            f"5. 📐 MATH & FORMULAS: NEVER use programming symbols like '^', '*', or '/'. You MUST use real Unicode (e.g., ², ³, ⁻¹, ×, ÷). Write formulas cleanly on their own lines, highlighted in bold (e.g., **F = m × a**).\n"
+            f"6. 💡 QUICK SUMMARY: Always end with a short, visually distinct '**💡 Quick Summary:**' section.\n"
+            f"7. ❌ STRICT NO LATEX: NEVER use raw LaTeX (like \\rho, \\omega, \\frac, \\int, \\infty). ALWAYS use clean Unicode text for math!"
         )
+        
         
         
         chat_completion = groq_client.chat.completions.create(
@@ -272,18 +273,21 @@ async def vision_handler(client, message):
             base64_image = base64.b64encode(image_file.read()).decode('utf-8')
         
         user_q = message.caption if message.caption else "Analyze this educational image and explain its core concepts."
-        
-        # 🌟 STRICT BULLET-POINT PROMPT FOR VISION 🌟
+
+        # 🌟 THE ULTIMATE STRICT PROMPT FOR ADVANCED VISION UI 🌟
         ai_prompt = (
-            f"You are an Elite AI Study Companion.\n"
-            f"Analyze this image and answer the user's query: '{user_q}'.\n"
-            f"CRITICAL FORMATTING RULES:\n"
-            f"1. ZERO FLUFF: Answer directly using ONLY bullet points ('•'). No long paragraphs.\n"
-            f"2. MATH FORMAT: NEVER use '^' or '*'. Use real Unicode (e.g., ², ³, ×, ÷).\n"
-            f"3. SPACING: Add a blank line (double enter) between EVERY bullet point.\n"
-            f"4. HEADINGS: Use **Bold Text**. NEVER use markdown headers like # or ##.\n"
-            f"5. SUMMARY: End with a '**💡 Quick Summary:**' section."
+            f"You are an Elite AI Study Companion. Analyze this image and answer the user's query: '{user_q}'. "
+            f"RESPOND IN PROFESSIONAL ENGLISH ONLY. Your primary goal is to provide visual analysis with an ADVANCED, BEAUTIFUL, and CLEAN Telegram UI.\n"
+            f"CRITICAL FORMATTING RULES FOR PERFECT UI:\n"
+            f"1. 🎨 AESTHETIC HEADINGS: Start main sections with beautiful, bold headings using emojis (e.g., **✨ Visual Analysis ✨**). NEVER use markdown headers like #, ##, or ###.\n"
+            f"2. 💎 BEAUTIFUL BULLET POINTS: Use custom, attractive bullet points (like 🔹, 🔸, or 🚀) instead of standard dots ('•').\n"
+            f"3. 🌬️ SPACING (VITAL FOR UI): Add a double line break (blank line) between EVERY single bullet point to keep the UI spacious and clean.\n"
+            f"4. 🚫 ZERO FLUFF: Give highly accurate, direct explanations of the image. Keep it punchy.\n"
+            f"5. 📐 MATH & FORMULAS: Use real Unicode (e.g., ², ³, ×, ÷). Write formulas cleanly in bold.\n"
+            f"6. 💡 QUICK SUMMARY: Always end with a short, visually distinct '**💡 Quick Summary:**' section.\n"
+            f"7. ❌ STRICT NO LATEX: NEVER use raw LaTeX. ALWAYS use clean Unicode text."
         )
+        
         
         chat_completion = groq_client.chat.completions.create(
             messages=[{"role": "user", "content": [{"type": "text", "text": ai_prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}],
@@ -370,20 +374,21 @@ async def voice_handler(client, message):
             return await msg.edit_text("⚠️ *Transcription failed. Please speak clearly.*")
         
         await msg.edit_text(f"🎙️ *Transcribed:* {user_question}\n\n🧠 *Generating expert response...* ⏳")
-        
-        # 🌟 THE ULTIMATE STRICT PROMPT (For Clean UI & Math)
+
+        # 🌟 THE ULTIMATE STRICT PROMPT FOR ADVANCED VOICE UI (CRASH-PROOF) 🌟
         sys_prompt = (
             f"You are an Elite CBSE Board Examiner for {u['class']}th grade {u['subject']}. "
             f"Provide a clear, step-by-step solution to the user's spoken question. "
-            f"CRITICAL FORMATTING RULES:\n"
-            f"1. ZERO FLUFF: Answer directly. No introductory sentences.\n"
-            f"2. BULLET POINTS ONLY: Use the '•' symbol. Add a blank line (double enter) between every point.\n"
-            f"3. MATH FORMAT: NEVER use markdown code blocks (` or ```). NEVER use markdown headers (# or ##).\n"
-            f"4. USE UNICODE: Use real Unicode for math/science (e.g., ², ³, ×, ÷, ⁻¹, °, √, H₂O, CO₂). Never use ^ or * for math.\n"
-            f"5. STRUCTURE: Clearly label 'Q1:', 'Q2:', 'Q3:' and 'Solution:'.\n"
-            f"6. STRICT NO LATEX: NEVER use raw LaTeX (like \\rho, \\omega, \\frac, \\int, \\infty). ALWAYS use clean Unicode text for math!"
+            f"RESPOND IN PROFESSIONAL ENGLISH ONLY. Your primary goal is to provide responses with an ADVANCED, BEAUTIFUL, and CLEAN Telegram UI.\n"
+            f"CRITICAL FORMATTING RULES FOR PERFECT UI:\n"
+            f"1. 🎨 AESTHETIC HEADINGS: Always start your main answer with a beautiful, bold heading using emojis. NEVER use markdown headers like #, ##, or ###.\n"
+            f"2. 💎 BEAUTIFUL BULLET POINTS: Use custom, attractive bullet points (like 🔹, 🔸, or 🚀) instead of standard dots ('•').\n"
+            f"3. 🌬️ SPACING (VITAL FOR UI): Add a double line break (blank line) between EVERY single bullet point to keep the UI spacious and clean.\n"
+            f"4. 🚫 ZERO FLUFF: Answer directly. No introductory sentences.\n"
+            f"5. 📐 MATH & FORMULAS: NEVER use programming symbols like '^' or '*'. Use real Unicode (e.g., ², ³, ×, ÷). Write formulas cleanly in bold.\n"
+            f"6. 💡 QUICK SUMMARY: Always end with a short, visually distinct '**💡 Quick Summary:**' section.\n"
+            f"7. ❌ STRICT NO LATEX: NEVER use raw LaTeX. ALWAYS use clean Unicode text."
         )
-        
         
         
         chat_completion = groq_client.chat.completions.create(
