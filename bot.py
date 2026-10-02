@@ -230,6 +230,10 @@ async def smart_solver(client, message):
         except Exception as e:
             if "MESSAGE_NOT_MODIFIED" not in str(e):
                 await message.reply(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
+
+    except Exception as e:
+        await processing_msg.edit_text(f"⚠️ *System Error:* `{str(e)}`")
+        
                 
 
 # --- 3. PDF GENERATION (Unchanged & Safe) ---
