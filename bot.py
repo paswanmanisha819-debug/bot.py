@@ -25,6 +25,9 @@ groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 user_profiles = {}
 
+user_profiles = {}
+user_chat_history = {} # 🧠 एडवांस AI मेमोरी सिस्टम (नया ऐड किया गया)
+
 
 # चैट और सवालों के जवाब के लिए (क्योंकि Llama 70B बंद हो चुका है)
 CHAT_MODEL = "openai/gpt-oss-120b"
@@ -201,13 +204,34 @@ async def smart_solver(client, message):
         
         
         
+        # --- 🧠 ADVANCED AI MEMORY SYSTEM 🧠 ---
+        # 1. अगर यूज़र की मेमोरी नहीं है, तो एक खाली लिस्ट बनाओ
+        if uid not in user_chat_history:
+            user_chat_history[uid] = []
+
+        # 2. सिस्टम प्रॉम्प्ट को सबसे ऊपर रखो (AI को उसका रोल याद दिलाने के लिए)
+        messages = [{"role": "system", "content": sys_prompt}]
+
+        # 3. पुरानी यादें (पिछले 6 मैसेजेस) जोड़ो ताकि बॉट कॉन्टेक्स्ट न भूले
+        messages.extend(user_chat_history[uid][-6:])
+
+        # 4. यूज़र का नया सवाल (करंट मैसेज) जोड़ो
+        messages.append({"role": "user", "content": message.text})
+
+        # 5. Groq AI से जवाब मांगो (पूरी हिस्ट्री के साथ)
         chat_completion = groq_client.chat.completions.create(
-            messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": message.text}],
+            messages=messages,
             model=CHAT_MODEL,
-            temperature=0.1
+            temperature=0.2
         )
         
         raw_answer = chat_completion.choices[0].message.content
+
+        # 6. यूज़र का सवाल और AI का नया जवाब मेमोरी में सेव करो
+        user_chat_history[uid].append({"role": "user", "content": message.text})
+        user_chat_history[uid].append({"role": "assistant", "content": raw_answer})
+        # ----------------------------------------
+        
         
         # 🧹 CLEANUP: टेलीग्राम UI को खराब करने वाले सारे सिंबल्स को डिलीट करना
         # (हम ** को नहीं छेड़ रहे हैं ताकि बोल्ड टेक्स्ट काम करता रहे)
