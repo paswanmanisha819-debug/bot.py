@@ -24,9 +24,8 @@ app = Client("study_companion_bot", api_id=API_ID, api_hash=API_HASH, bot_token=
 groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 user_profiles = {}
-
-user_profiles = {}
-user_chat_history = {} # 🧠 एडवांस AI मेमोरी सिस्टम (नया ऐड किया गया)
+user_chat_history = {} # 🧠 एडवांस AI मेमोरी सिस्टम
+media_groups = {} # 📸 स्मार्ट एल्बम स्कैनर के लिए (NEW)
 
 
 # चैट और सवालों के जवाब के लिए (क्योंकि Llama 70B बंद हो चुका है)
@@ -286,69 +285,101 @@ async def handle_pdf_generation(client, cb):
     finally:
         if pdf_path: safe_cleanup(pdf_path)
 
-# --- 5. ADVANCED VISION HANDLER (Clean UI Update) ---
+# --- 5. ADVANCED VISION HANDLER (SMART NOTES SCANNER & ALBUM SUPPORT) ---
 @app.on_message(filters.photo)
 async def vision_handler(client, message):
-    msg = await message.reply_text("📸 *Processing image through Vision AI...* ⏳")
-    image_path = None
-    try:
-        image_path = await message.download()
-        with open(image_path, "rb") as image_file:
-            base64_image = base64.b64encode(image_file.read()).decode('utf-8')
-        
-        user_q = message.caption if message.caption else "Analyze this educational image and explain its core concepts."
-
-        # 🌟 THE ULTIMATE STRICT PROMPT FOR ADVANCED VISION UI 🌟
-        ai_prompt = (
-            f"You are an Elite AI Study Companion. Analyze this image and answer the user's query: '{user_q}'. "
-            f"RESPOND IN PROFESSIONAL ENGLISH ONLY. Your primary goal is to provide visual analysis with an ADVANCED, BEAUTIFUL, and CLEAN Telegram UI.\n"
-            f"CRITICAL FORMATTING RULES FOR PERFECT UI:\n"
-            f"1. 🎨 AESTHETIC HEADINGS: Start main sections with beautiful, bold headings using emojis (e.g., **✨ Visual Analysis ✨**). NEVER use markdown headers like #, ##, or ###.\n"
-            f"2. 💎 BEAUTIFUL BULLET POINTS: Use custom, attractive bullet points (like 🔹, 🔸, or 🚀) instead of standard dots ('•').\n"
-            f"3. 🌬️ SPACING (VITAL FOR UI): Add a double line break (blank line) between EVERY single bullet point to keep the UI spacious and clean.\n"
-            f"4. 🚫 ZERO FLUFF: Give highly accurate, direct explanations of the image. Keep it punchy.\n"
-            f"5. 📐 MATH & FORMULAS: Use real Unicode (e.g., ², ³, ×, ÷). Write formulas cleanly in bold.\n"
-            f"6. 💡 QUICK SUMMARY: Always end with a short, visually distinct '**💡 Quick Summary:**' section.\n"
-            f"7. ❌ STRICT NO LATEX: NEVER use raw LaTeX. ALWAYS use clean Unicode text."
-        )
-        
-        
-        chat_completion = groq_client.chat.completions.create(
-            messages=[{"role": "user", "content": [{"type": "text", "text": ai_prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}],
-            model=VISION_MODEL,
+    # 1. 🖼️ Album (Multiple Photos) Logic
+    group_id = message.media_group_id
+    
+    if group_id:
+        if group_id not in media_groups:
+            media_groups[group_id] = [message]
+            processing_msg = await message.reply_text("📸 *Receiving multiple pages of your notes...* ⏳")
+            await asyncio.sleep(4) # चारों पन्नों के आने का इंतज़ार करेगा
             
-        )
+            photos_to_process = media_groups.pop(group_id)
+            await processing_msg.edit_text(f"🔍 *Scanning {len(photos_to_process)} pages of handwritten notes using Vision AI...* ⏳")
+        else:
+            # अगर उसी एल्बम का अगला फोटो है, तो उसे लिस्ट में जोड़कर रुक जाओ
+            media_groups[group_id].append(message)
+            return
+    else:
+        # अगर सिर्फ 1 फोटो भेजी है
+        photos_to_process = [message]
+        processing_msg = await message.reply_text("📸 *Scanning your notes through Vision AI...* ⏳")
+
+    try:
+        from groq import Groq
+        groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
         
-        raw_answer = chat_completion.choices[0].message.content
-        clean_answer = raw_answer.replace("###", "").replace("##", "").replace("#", "").replace("`", "")
+        combined_text = ""
         
+        # 2. 🤖 एक-एक करके सारे पन्नों को AI से पढ़वाना
+        for idx, msg in enumerate(photos_to_process):
+            image_path = await msg.download()
+            with open(image_path, "rb") as image_file:
+                base64_image = base64.b64encode(image_file.read()).decode('utf-8')
+            
+            user_q = msg.caption if msg.caption else "Convert this handwritten note into perfectly structured digital text."
+            
+            # 🌟 SMART OCR & BEAUTIFICATION PROMPT 🌟
+            ai_prompt = (
+                f"You are an Elite AI Notes Digitizer. The user has uploaded handwritten notes. Query: '{user_q}'. "
+                f"Transcribe the handwriting accurately, fix spelling/grammatical mistakes, and organize it into a beautiful structured format. "
+                f"CRITICAL FORMATTING RULES FOR PERFECT UI:\n"
+                f"1. 🎨 AESTHETIC HEADINGS: Start sections with bold headings and emojis (e.g., **✨ Key Concepts ✨**). NEVER use markdown headers (#).\n"
+                f"2. 💎 BEAUTIFUL BULLET POINTS: Use custom bullet points (🔹, 🔸, 🚀).\n"
+                f"3. 🌬️ SPACING: Add a double line break (blank line) between EVERY single bullet point.\n"
+                f"4. 🚫 ZERO FLUFF: Keep it highly accurate and professional.\n"
+                f"5. 📐 MATH & FORMULAS: Use real Unicode (e.g., ², ³, ×, ÷). Write formulas in bold.\n"
+                f"6. 💡 QUICK SUMMARY: Always end with '**💡 Quick Summary:**'.\n"
+                f"7. ❌ NO LATEX: NEVER use raw LaTeX."
+            )
+            
+            chat_completion = groq_client.chat.completions.create(
+                messages=[{"role": "user", "content": [{"type": "text", "text": ai_prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}],
+                model=VISION_MODEL
+            )
+            
+            raw_answer = chat_completion.choices[0].message.content
+            clean_answer = raw_answer.replace("###", "").replace("##", "").replace("#", "").replace("`", "")
+            
+            # 3. 📄 अगर कई पन्ने हैं, तो Page 1, Page 2 करके डिज़ाइन करना
+            if len(photos_to_process) > 1:
+                combined_text += f"📄 **Page {idx + 1}**\n{clean_answer}\n\n━━━━━━━━━━━━━━━━━━━━\n\n"
+            else:
+                combined_text += f"{clean_answer}\n\n"
+                
+            if os.path.exists(image_path):
+                os.remove(image_path)
+        
+        # 4. 🎬 YouTube और बटन सेटअप
         search_query = message.caption if message.caption else "Important educational concept"
         youtube_link = await asyncio.to_thread(get_direct_video, search_query)
         
         keyboard = InlineKeyboardMarkup([
-    [InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link), InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")],
-    [InlineKeyboardButton("🔙 Back to Main Menu", callback_data=f"back_to_menu_{message.id}")]
-])
-        
+            [InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link), InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{processing_msg.id}")],
+            [InlineKeyboardButton("🔙 Back to Main Menu", callback_data=f"back_to_menu_{processing_msg.id}")]
+        ])
         
         final_reply = (
-            f"📸 **VISUAL ANALYSIS REPORT**\n"
+            f"📸 **SMART NOTES SCANNER REPORT**\n"
             f"━━━━━━━━━━━━━━━━━━━━\n\n"
-            f"{clean_answer}\n\n"
+            f"{combined_text}"
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"👨‍💻 *Engineered by Aditya*\n"
+            f"👨‍💻 *Digitized by Aditya's Elite AI*\n"
             f"📸 [Follow on Instagram](https://www.instagram.com/aadit_paswan.007)"
         )
         
-        await msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
+        # (Telegram में बहुत लम्बे मैसेज के लिए सेफ्टी)
+        if len(final_reply) > 4000:
+            final_reply = final_reply[:4000] + "\n\n⚠️ *Note: Text truncated. Press PDF button to get full notes.*"
         
-    # यह वाला हिस्सा तुम्हारे कोड से गायब हो गया था, जिसे मैंने वापस लगा दिया है 👇
+        await processing_msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
+        
     except Exception as e:
-        await msg.edit_text(f"⚠️ *Vision Error:* `{str(e)}`")
-    finally:
-        if image_path and os.path.exists(image_path):
-            os.remove(image_path)
-            
+        await processing_msg.edit_text(f"⚠️ *Scanner Error:* `{str(e)}`")
+        
 
 # --- 5. IMAGE QUIZ CALLBACK (With Insta Link) ---
 @app.on_callback_query(filters.regex(r"^imgquiz_"))
