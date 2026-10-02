@@ -373,8 +373,8 @@ async def voice_handler(client, message):
         
         # 🌟 THE ULTIMATE STRICT PROMPT (For Clean UI & Math)
         sys_prompt = (
-            f"You are an Elite CBSE Board Examiner for {grade}th grade {subj}. "
-            f"Provide the 3 most important exam questions and their step-by-step solutions for the chapter: '{chapter}'. "
+            f"You are an Elite CBSE Board Examiner for {u['class']}th grade {u['subject']}. "
+            f"Provide a clear, step-by-step solution to the user's spoken question. "
             f"CRITICAL FORMATTING RULES:\n"
             f"1. ZERO FLUFF: Answer directly. No introductory sentences.\n"
             f"2. BULLET POINTS ONLY: Use the '•' symbol. Add a blank line (double enter) between every point.\n"
@@ -383,6 +383,7 @@ async def voice_handler(client, message):
             f"5. STRUCTURE: Clearly label 'Q1:', 'Q2:', 'Q3:' and 'Solution:'.\n"
             f"6. STRICT NO LATEX: NEVER use raw LaTeX (like \\rho, \\omega, \\frac, \\int, \\infty). ALWAYS use clean Unicode text for math!"
         )
+        
         
         
         chat_completion = groq_client.chat.completions.create(
