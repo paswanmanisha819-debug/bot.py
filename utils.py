@@ -1,9 +1,9 @@
 import os
 import re
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, ListFlowable, ListItem
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 from config import TEMP_DIR
@@ -41,15 +41,16 @@ def add_header_footer(canvas, doc):
 # 🚀 2. THE ULTIMATE PDF GENERATOR FUNCTION
 def generate_study_notes_pdf(user_id: int, topic: str, text_content: str) -> str:
     # 🧹 CLEANUP: Telegram Emojis crash PDF generators. Let's clean them automatically.
+    # Keep some basic formatting characters if needed, but remove complex emojis.
     clean_text = re.sub(r'[^\x00-\x7F]+', ' ', text_content)
-    clean_text = clean_text.replace('**', '') # Remove markdown asterisks for clean UI
+    clean_text = clean_text.replace('**', '') # Remove markdown asterisks
     
     if not os.path.exists(TEMP_DIR):
         os.makedirs(TEMP_DIR)
         
     file_path = os.path.join(TEMP_DIR, f"Elite_Notes_{user_id}_{int(os.getpid())}.pdf")
     
-    # Setup Document with proper margins for Header/Footer
+    # Setup Document with proper margins
     doc = SimpleDocTemplate(
         file_path,
         pagesize=letter,
@@ -59,7 +60,7 @@ def generate_study_notes_pdf(user_id: int, topic: str, text_content: str) -> str
 
     styles = getSampleStyleSheet()
     
-    # 💎 CUSTOM PRO-LEVEL TEXT STYLES
+    # 💎 CUSTOM PRO-LEVEL TEXT STYLES (Improved for Spacing and Readability)
     title_style = ParagraphStyle(
         name='EliteTitle',
         parent=styles['Heading1'],
@@ -67,7 +68,8 @@ def generate_study_notes_pdf(user_id: int, topic: str, text_content: str) -> str
         fontSize=18,
         leading=24,
         textColor=colors.HexColor('#2B6CB0'), # Premium Blue
-        spaceAfter=20
+        spaceAfter=20,
+        alignment=TA_LEFT
     )
 
     body_style = ParagraphStyle(
@@ -75,9 +77,10 @@ def generate_study_notes_pdf(user_id: int, topic: str, text_content: str) -> str
         parent=styles['BodyText'],
         fontName='Helvetica',
         fontSize=11,
-        leading=18,
+        leading=18,  # Increased line height for better readability
         textColor=colors.HexColor('#2D3748'),
-        spaceAfter=10
+        spaceAfter=12, # Space between paragraphs
+        alignment=TA_JUSTIFY # Justified text looks more professional
     )
     
     subheading_style = ParagraphStyle(
@@ -86,9 +89,20 @@ def generate_study_notes_pdf(user_id: int, topic: str, text_content: str) -> str
         fontName='Helvetica-Bold',
         fontSize=14,
         leading=18,
-        textColor=colors.HexColor('#E53E3E'), # Accent Red for Page Numbers
+        textColor=colors.HexColor('#E53E3E'), # Accent Red for subheadings
         spaceBefore=15,
         spaceAfter=10
+    )
+    
+    bullet_style = ParagraphStyle(
+        name='EliteBullet',
+        parent=styles['BodyText'],
+        fontName='Helvetica',
+        fontSize=11,
+        leading=16,
+        textColor=colors.HexColor('#2D3748'),
+        leftIndent=20, # Indent bullet points
+        spaceAfter=8
     )
 
     story = []
@@ -96,21 +110,49 @@ def generate_study_notes_pdf(user_id: int, topic: str, text_content: str) -> str
     # Add Topic Name
     safe_topic = topic[:70] + "..." if len(topic) > 70 else topic
     story.append(Paragraph(f"Subject: {safe_topic}", title_style))
+    story.append(Spacer(1, 10)) # Extra space after title
     
-    # 🧠 SMART TEXT ALIGNMENT & FORMATTING
+    # 🧠 SMART TEXT ALIGNMENT & FORMATTING (Handling Bullets & Paragraphs)
+    current_list = []
+    
     for line in clean_text.split('\n'):
         line = line.strip()
         if not line:
+            # If there's an active list, add it to the story before a blank line
+            if current_list:
+                story.append(ListFlowable(current_list, bulletType='bullet', start='circle', leftIndent=15))
+                current_list = []
             continue
             
         if line.startswith(('Page 1', 'Page 2', 'Page 3', 'Page 4', 'Page 5')):
-            # Highlights 'Page 1', 'Page 2' automatically
+            if current_list:
+                story.append(ListFlowable(current_list, bulletType='bullet', start='circle', leftIndent=15))
+                current_list = []
             story.append(Paragraph(line, subheading_style))
-        elif line.startswith(('-', '*', 'Quick Summary')):
-            # Makes important points bold
+        elif line.startswith(('-', '*', '•')):
+             # Handle bullet points
+             # Clean the starting character
+             bullet_text = line[1:].strip()
+             current_list.append(ListItem(Paragraph(bullet_text, bullet_style)))
+        elif line.startswith('Quick Summary'):
+            if current_list:
+                story.append(ListFlowable(current_list, bulletType='bullet', start='circle', leftIndent=15))
+                current_list = []
+            story.append(Spacer(1, 10))
             story.append(Paragraph(f"<b>{line}</b>", body_style))
         else:
-            story.append(Paragraph(line, body_style))
+            if current_list:
+                story.append(ListFlowable(current_list, bulletType='bullet', start='circle', leftIndent=15))
+                current_list = []
+            # Bold detection (basic)
+            if line.isupper() and len(line) > 10:
+                 story.append(Paragraph(f"<b>{line}</b>", body_style))
+            else:
+                 story.append(Paragraph(line, body_style))
+
+    # Add any remaining list items
+    if current_list:
+        story.append(ListFlowable(current_list, bulletType='bullet', start='circle', leftIndent=15))
 
     # Build the PDF with our custom Header & Footer attached to every page
     doc.build(story, onFirstPage=add_header_footer, onLaterPages=add_header_footer)
