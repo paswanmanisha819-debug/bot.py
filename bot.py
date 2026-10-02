@@ -287,7 +287,7 @@ async def vision_handler(client, message):
         
         chat_completion = groq_client.chat.completions.create(
             messages=[{"role": "user", "content": [{"type": "text", "text": ai_prompt}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}],
-            model="meta-llama/llama-4-scout-17b-16e-instruct"
+            model=VISION_MODEL,
             
         )
         
@@ -362,7 +362,7 @@ async def voice_handler(client, message):
         audio_path = await message.download()
         with open(audio_path, "rb") as file:
             transcription = groq_client.audio.transcriptions.create(
-                file=(audio_path, file.read()), model=CHAT_MODEL,
+                file=(audio_path, file.read()), model=AUDIO_MODEL,
             )
         
         user_question = transcription.text.strip()
@@ -390,7 +390,7 @@ async def voice_handler(client, message):
                 {"role": "system", "content": sys_prompt},
                 {"role": "user", "content": user_question}
             ],
-            model=VISION_MODEL,
+            model=CHAT_MODEL,
             temperature=0.1
         )
         
@@ -558,7 +558,7 @@ async def generate_exam_topic(client, message):
                 {"role": "system", "content": sys_prompt},
                 {"role": "user", "content": f"Generate important questions for chapter: {chapter}"}
             ],
-            model="whisper-large-v3-turbo",
+            model=CHAT_MODEL,
             temperature=0.2
         )
         
