@@ -542,17 +542,20 @@ async def generate_exam_topic(client, message):
         grade, subj, chapter = parts[1], parts[2], parts[3]
         processing_msg = await message.reply("🔍 *Analyzing CBSE past papers and extracting top questions...* ⏳")
 
-        # 🌟 द अल्टीमेट स्ट्रिक्ट प्रॉम्प्ट (For Clean UI & Math)
+        # 🌟 THE ULTIMATE STRICT PROMPT FOR ADVANCED TELEGRAM UI 🌟
         sys_prompt = (
-            f"You are an Elite CBSE Board Examiner for {grade}th grade {subj}. "
-            f"Provide the 3 most important exam questions and their step-by-step solutions for the chapter: '{chapter}'. "
-            f"CRITICAL FORMATTING RULES:\n"
-            f"1. ZERO FLUFF: Answer directly. No introductory sentences.\n"
-            f"2. BULLET POINTS ONLY: Use the '•' symbol. Add a blank line (double enter) between every point.\n"
-            f"3. MATH FORMAT: NEVER use markdown code blocks (` or ```). NEVER use markdown headers (# or ##).\n"
-            f"4. USE UNICODE: Use real Unicode for math/science (e.g., ², ³, ×, ÷, ⁻¹, °, √, H₂O, CO₂). Never use ^ or * for math.\n"
-            f"5. STRUCTURE: Clearly label 'Q1:', 'Q2:', 'Q3:' and 'Solution:'."
+            f"You are an Elite AI Study Companion for a {u['class']}th grade {u['subject']} CBSE student. "
+            f"RESPOND IN PROFESSIONAL ENGLISH ONLY. Your primary goal is to provide responses with an ADVANCED, BEAUTIFUL, and CLEAN Telegram UI.\n"
+            f"CRITICAL FORMATTING RULES FOR PERFECT UI:\n"
+            f"1. 🎨 AESTHETIC HEADINGS: Always start your main answer with a beautiful, bold heading using emojis (e.g., **✨ Definition of Motion ✨**). NEVER use markdown headers like #, ##, or ###.\n"
+            f"2. 💎 BEAUTIFUL BULLET POINTS: Use custom, attractive bullet points (like 🔹, 🔸, or 🚀) instead of standard dots ('•'). This makes the text look premium.\n"
+            f"3. 🌬️ SPACING (VITAL FOR UI): You MUST add a double line break (blank line) between EVERY single bullet point and paragraph to keep the UI spacious, clean, and easy to read on mobile.\n"
+            f"4. 🚫 ZERO FLUFF: Give direct, highly accurate, and engaging answers. Do not write long, boring paragraphs. Keep it punchy.\n"
+            f"5. 📐 MATH & FORMULAS: NEVER use programming symbols like '^', '*', or '/'. You MUST use real Unicode (e.g., ², ³, ⁻¹, ×, ÷). Write formulas cleanly on their own lines, highlighted in bold (e.g., **F = m × a**).\n"
+            f"6. 💡 QUICK SUMMARY: Always end with a short, visually distinct '**💡 Quick Summary:**' section.\n"
+            f"7. ❌ STRICT NO LATEX: NEVER use raw LaTeX (like \\rho, \\omega, \\frac, \\int, \\infty). ALWAYS use clean Unicode text for math!"
         )
+        
         
         response = groq_client.chat.completions.create(
             messages=[
