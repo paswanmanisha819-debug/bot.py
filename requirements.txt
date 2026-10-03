@@ -11,3 +11,4 @@ pydub
 pyTelegramBotAPI
 Flask
 duckduckgo-search
+youtube-transcript-api
