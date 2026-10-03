@@ -1,8 +1,10 @@
 import os
 import random
 from groq import Groq
+import re
 import asyncio
 import logging
+from youtube_transcript_api import YouTubeTranscriptApi
 import time
 from typing import List, Dict
 from duckduckgo_search import DDGS
@@ -148,6 +150,58 @@ def get_ai_generated_quiz_from_image(base64_image):
             
     except Exception as e:
         return f"⚠️ Quiz Generation Error: {str(e)}"
+
+logger = logging.getLogger(__name__)
+
+class EliteYouTubeExtractor:
+    """
+    Ultra-Advanced YouTube Cognitive Extractor.
+    Engineered to bypass download restrictions and extract raw transcripts 
+    using background threading and Regex optimization.
+    """
+    
+    @staticmethod
+    def _extract_video_id(url: str) -> str:
+        """Advanced Regex to extract Video ID from ANY YouTube URL format."""
+        match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11}).*", url)
+        return match.group(1) if match else None
+
+    @staticmethod
+    def _fetch_transcript_sync(video_id: str) -> str:
+        """
+        Synchronous core to extract subtitles with timestamps.
+        Prioritizes English, then Hindi, and formats it securely.
+        """
+        try:
+            # Fetching transcript (fallback to hindi if english not found)
+            transcript_list = YouTubeTranscriptApi.get_transcript(video_id, languages=['en', 'hi', 'en-IN'])
             
+            full_text = ""
+            for index, item in enumerate(transcript_list):
+                # Protection: Capping at 300 lines to prevent AI Token Overflow (approx 30 mins of video)
+                if index > 300: 
+                    full_text += "\n[SYSTEM ALERT: Transcript truncated to prevent memory overflow.]"
+                    break
+                    
+                minutes = int(item['start'] // 60)
+                seconds = int(item['start'] % 60)
+                full_text += f"[{minutes:02d}:{seconds:02d}] {item['text']}\n"
+                
+            return full_text
+        except Exception as e:
+            logger.error(f"Transcript Error for {video_id}: {str(e)}")
+            return "ERROR: Transcript disabled by the creator or video is unavailable."
+
+    async def analyze_video(self, url: str) -> str:
+        """Asynchronous wrapper to prevent main thread blocking."""
+        video_id = self._extract_video_id(url)
+        if not video_id:
+            return "ERROR: Invalid YouTube URL structure."
         
+        # ⚡ PRO LEVEL: Pushing extraction to a background CPU thread
+        transcript = await asyncio.to_thread(self._fetch_transcript_sync, video_id)
+        return transcript
+
+# Global Singleton Instance
+yt_extractor = EliteYouTubeExtractor()
 
