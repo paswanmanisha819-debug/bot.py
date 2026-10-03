@@ -7,6 +7,8 @@ from datetime import datetime, timedelta
 import urllib.parse
 import time
 import uuid
+from pyrogram.enums import ChatAction
+from features import research_engine
 
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
@@ -915,8 +917,84 @@ async def battle_callback_manager(client, callback_query):
         pass 
     
     await callback_query.answer(f"✅ Trajectory Locked: Option {choice} registered.", show_alert=False)
-        
 
+# --- 7. ELITE AI RESEARCH TERMINAL (STEALTH WEB SYNTHESIS) ---
+
+@app.on_message(filters.command(["ask", "research", "search"]))
+async def elite_web_research_handler(client, message):
+    command_args = message.text.split(" ", 1)
+    
+    if len(command_args) < 2:
+        await message.reply_text(
+            "⚠️ **Syntax Error:** Initialization failed.\n"
+            "**Usage:** `/ask What is the latest update on quantum computing?`"
+        )
+        return
+        
+    user_query = command_args[1].strip()
+    start_time = time.time() # Telemetry Initialization
+    
+    status_msg = await message.reply_text("🌐 *Establishing uplink to Global Web...*")
+    
+    try:
+        # Dynamic Chat Action (Displays "Typing..." at the top of the chat)
+        await client.send_chat_action(message.chat.id, ChatAction.TYPING)
+        
+        # Step 1: Deep Web Scraping (Stealth Mode)
+        await status_msg.edit_text("📡 *Extracting encrypted packets via secure nodes...*")
+        web_context, sources_count = await research_engine.generate_stealth_context(user_query)
+        
+        # Step 2: Neural Processing via Groq Core
+        await status_msg.edit_text("🧠 *Synthesizing data through Neural Core...*")
+        
+        from groq import Groq
+        groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+        
+        system_prompt = (
+            "You are the Elite AI Research Architect of Aditya's Study Portal. "
+            "You have been provided with real-time, up-to-date web context. "
+            "CRITICAL RULES:\n"
+            "1. Answer the user's query comprehensively and accurately based on the web context.\n"
+            "2. DO NOT include any raw URLs, links, or mention the word 'Wikipedia'.\n"
+            "3. Structure your answer flawlessly using Markdown (Bold headers, bullet points).\n"
+            "4. Maintain a highly professional, academic, and authoritative tone.\n"
+            "5. If the context does not contain the answer, seamlessly use your internal knowledge."
+        )
+        
+        user_prompt = f"Query: {user_query}\n\n{web_context}"
+        
+        # Utilizing Groq for ultra-fast inference
+        response = groq_client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            model="llama3-8b-8192", 
+            temperature=0.35, # Highly factual & deterministic
+            max_tokens=1500
+        )
+        
+        ai_response = response.choices[0].message.content
+        execution_time = round(time.time() - start_time, 2)
+        
+        # Final Ultra-Premium UI Construction (Clean, No Links)
+        final_ui = (
+            f"🔬 **NEURAL SYNTHESIS COMPLETE** 🔬\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🎯 **Query:** _{user_query}_\n\n"
+            f"{ai_response}\n\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"⚡ **System Telemetry:**\n"
+            f"• **Data Nodes Scanned:** `{sources_count}`\n"
+            f"• **Latency:** `{execution_time}s`\n"
+            f"• **Engine:** `Elite Research Core`"
+        )
+        
+        await status_msg.edit_text(final_ui, disable_web_page_preview=True)
+        
+    except Exception as e:
+        await status_msg.edit_text(f"⚠️ **Core Failure:** Connection to Neural Net lost.\n`Trace: {str(e)}`")
+        
 # --- MAIN RUNNER ---
 if __name__ == "__main__":
     keep_alive()
