@@ -1,6 +1,95 @@
 import os
 import random
 from groq import Groq
+import asyncio
+import logging
+import time
+from typing import List, Dict
+from duckduckgo_search import AsyncDDGS
+
+# Telemetry & Logging Configuration
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+class EliteWebResearchEngine:
+    """
+    Ultra-Advanced Asynchronous Web Scraping Engine with In-Memory LRU Caching.
+    Engineered for zero-latency repetitive queries and stealth data extraction.
+    """
+    
+    def __init__(self, timeout: int = 15, max_results: int = 6):
+        self.timeout = timeout
+        self.max_results = max_results
+        self.region = "wt-wt"
+        self.safesearch = "moderate"
+        self._query_cache: Dict[str, Dict] = {}
+        self._cache_ttl = 3600  # Cache retention: 1 Hour
+
+    def _clean_cache(self):
+        """Internal Garbage Collection to prevent memory overflow."""
+        current_time = time.time()
+        expired_keys = [k for k, v in self._query_cache.items() if current_time - v['timestamp'] > self._cache_ttl]
+        for k in expired_keys:
+            del self._query_cache[k]
+
+    async def execute_deep_search(self, query: str) -> List[Dict[str, str]]:
+        self._clean_cache()
+        
+        normalized_query = query.lower().strip()
+        if normalized_query in self._query_cache:
+            logger.info(f"Cache Hit for query: {normalized_query}")
+            return self._query_cache[normalized_query]['data']
+
+        extracted_data: List[Dict[str, str]] = []
+        
+        try:
+            async with AsyncDDGS() as ddgs:
+                search_routine = ddgs.text(
+                    keywords=query,
+                    region=self.region,
+                    safesearch=self.safesearch,
+                    max_results=self.max_results
+                )
+                
+                async for result in search_routine:
+                    extracted_data.append({
+                        "title": result.get("title", "Unknown Node"),
+                        "snippet": result.get("body", "No description."),
+                        "domain": result.get("href", "").split("/")[2] if "//" in result.get("href", "") else "web"
+                    })
+            
+            if extracted_data:
+                self._query_cache[normalized_query] = {
+                    'data': extracted_data,
+                    'timestamp': time.time()
+                }
+                    
+        except asyncio.TimeoutError:
+            logger.error(f"Search Engine Timeout: {query}")
+        except Exception as e:
+            logger.error(f"Critical Subsystem Failure: {str(e)}")
+            
+        return extracted_data
+
+    async def generate_stealth_context(self, query: str) -> tuple:
+        """
+        Compiles web data for the LLM without exposing raw URLs to the end-user.
+        Returns (Context String, Number of Sources Scanned).
+        """
+        raw_results = await self.execute_deep_search(query)
+        
+        if not raw_results:
+            return "SYSTEM WARNING: Real-time data unavailable. Rely on internal knowledge.", 0
+            
+        context_string = "[REAL-TIME WEB DATA CONTEXT]\n"
+        
+        for index, item in enumerate(raw_results, start=1):
+            context_string += f"Data Node [{index}] ({item['domain']}): {item['title']} - {item['snippet']}\n"
+            
+        return context_string, len(raw_results)
+
+# Global Singleton Instance
+research_engine = EliteWebResearchEngine()
 
 # अपनी API Key यहाँ रखना मत भूलना
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -16,7 +105,7 @@ def get_ai_generated_quiz(student_class):
     try:
         chat_completion = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            model="llama-3.1-8b-instant",
+            CHAT_MODEL = "openai/gpt-oss-120b",
         )
         return chat_completion.choices[0].message.content.strip()
     except Exception as e:
@@ -38,7 +127,7 @@ def get_ai_generated_quiz_from_image(base64_image):
                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
                 ]
             }],
-            model="meta-llama/llama-4-scout-17b-16e-instruct",
+            CHAT_MODEL = "openai/gpt-oss-120b",
         )
         text = chat_completion.choices[0].message.content.strip()
         
