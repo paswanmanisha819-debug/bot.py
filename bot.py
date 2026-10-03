@@ -175,14 +175,12 @@ async def save_profile(client, cb):
     
     await cb.message.edit_text(success_msg)
     await cb.answer()
-    
-    
 
 # --- 2. ADVANCED TEXT SOLVER (100% Clean UI & Crash-Proof Edition) ---
-@app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space"]))
+@app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space", "yt", "video", "summary", "ask", "research", "search", "topic", "battle", "admin"]))
 async def smart_solver(client, message):
-    uid = message.from_user.id
-    
+                    
+
     # 🚀 FINAL FIX: अगर बॉट मेमोरी भूल जाए, तो एरर मत दो, सीधा डिफ़ॉल्ट सेट कर दो!
     if uid not in user_profiles: 
         user_profiles[uid] = {"class": "9", "subject": "Science"}
