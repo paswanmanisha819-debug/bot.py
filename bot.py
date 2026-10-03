@@ -9,6 +9,7 @@ import time
 import uuid
 from pyrogram.enums import ChatAction
 from features import research_engine
+from features import research_engine, yt_extractor
 
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
@@ -994,7 +995,97 @@ async def elite_web_research_handler(client, message):
         
     except Exception as e:
         await status_msg.edit_text(f"⚠️ **Core Failure:** Connection to Neural Net lost.\n`Trace: {str(e)}`")
+
+# --- 8. YOUTUBE DEEP-DIVE EXTRACTOR (AI SUMMARY) ---
+
+@app.on_message(filters.command(["yt", "video", "summary"]))
+async def youtube_ai_summary(client, message):
+    command_args = message.text.split(" ", 1)
+    
+    if len(command_args) < 2:
+        await message.reply_text(
+            "⚠️ **Syntax Error:** Video link missing.\n"
+            "**Usage:** `/yt [YouTube Link] [Optional: Specific Question]`\n"
+            "**Example:** `/yt https://youtu.be/xyz What is Newton's 3rd Law?`"
+        )
+        return
         
+    # Separating URL and User Query (if any)
+    input_data = command_args[1].strip().split(" ", 1)
+    video_url = input_data[0]
+    specific_query = input_data[1] if len(input_data) > 1 else "Provide a highly structured and detailed summary of this video."
+    
+    start_time = time.time()
+    
+    status_msg = await message.reply_text("🎥 *Establishing secure connection to YouTube servers...*")
+    
+    try:
+        await client.send_chat_action(message.chat.id, ChatAction.TYPING)
+        
+        # Step 1: Extract Subtitles Stealthily
+        await status_msg.edit_text("📡 *Bypassing video stream and extracting raw transcript...*")
+        transcript_data = await yt_extractor.analyze_video(video_url)
+        
+        if transcript_data.startswith("ERROR"):
+            await status_msg.edit_text(f"⚠️ **Extraction Failed:**\n`{transcript_data}`\n_Note: Some videos do not have subtitles enabled._")
+            return
+            
+        # Step 2: Neural AI Processing
+        await status_msg.edit_text("🧠 *Injecting transcript into Llama-3 Neural Core for analysis...*")
+        
+        from groq import Groq
+        groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+        
+        system_prompt = (
+            "You are an Elite AI Video Analyst. You are given a time-stamped transcript of a YouTube video. "
+            "CRITICAL RULES:\n"
+            "1. Analyze the transcript and answer the user's query perfectly.\n"
+            "2. If summarizing, highlight the main topics with their exact timestamps (e.g., `[04:15]`).\n"
+            "3. Format beautifully using Markdown (bolding, custom bullets, no raw headers).\n"
+            "4. Maintain a highly professional, Silicon Valley-level academic tone.\n"
+            "5. Never hallucinate. Stick strictly to what is said in the video."
+        )
+        
+        user_prompt = f"User Request: {specific_query}\n\n[VIDEO TRANSCRIPT]\n{transcript_data}"
+        
+        response = groq_client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            model="llama3-8b-8192", 
+            temperature=0.3, 
+            max_tokens=1500
+        )
+        
+        ai_response = response.choices[0].message.content
+        execution_time = round(time.time() - start_time, 2)
+        
+        # 💻 ULTRA-ADVANCED DASHBOARD UI CONSTRUCTION
+        final_ui = (
+            f"🎥 **YOUTUBE NEURAL ANALYSIS** 🎥\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🎯 **Target:** `{specific_query}`\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"{ai_response}\n\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"⚡ **System Telemetry:**\n"
+            f"├ Extraction Mode: `Transcript Bypass`\n"
+            f"├ Latency: `{execution_time}s`\n"
+            f"└ Engine: `Aditya's AI Core`"
+        )
+        
+        # Sending final response and adding a PDF export button for the notes
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("📥 Export Summary as PDF", callback_data=f"gen_pdf_{status_msg.id}")]
+        ])
+        
+        await status_msg.edit_text(final_ui, reply_markup=keyboard, disable_web_page_preview=True)
+        
+    except Exception as e:
+        await status_msg.edit_text(f"⚠️ **Core Failure:** Connection lost.\n`Trace: {str(e)}`")
+        
+
 # --- MAIN RUNNER ---
 if __name__ == "__main__":
     keep_alive()
