@@ -10,3 +10,4 @@ SpeechRecognition
 pydub
 pyTelegramBotAPI
 Flask
+duckduckgo-search
