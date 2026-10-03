@@ -5,7 +5,7 @@ import asyncio
 import logging
 import time
 from typing import List, Dict
-from duckduckgo_search import AsyncDDGS
+from duckduckgo_search import DDGS
 
 # Telemetry & Logging Configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class EliteWebResearchEngine:
     """
-    Ultra-Advanced Asynchronous Web Scraping Engine with In-Memory LRU Caching.
+    Ultra-Advanced Web Scraping Engine with In-Memory LRU Caching & Multi-Threading.
     Engineered for zero-latency repetitive queries and stealth data extraction.
     """
     
@@ -32,6 +32,32 @@ class EliteWebResearchEngine:
         for k in expired_keys:
             del self._query_cache[k]
 
+    def _fetch_results_sync(self, query: str) -> List[Dict[str, str]]:
+        """
+        Synchronous core engine that runs in an isolated background thread 
+        to prevent blocking the main Telegram event loop.
+        """
+        extracted_data = []
+        try:
+            # Using the new DDGS architecture compliant with v8.1+
+            with DDGS() as ddgs:
+                results = ddgs.text(
+                    keywords=query,
+                    region=self.region,
+                    safesearch=self.safesearch,
+                    max_results=self.max_results
+                )
+                for result in results:
+                    extracted_data.append({
+                        "title": result.get("title", "Unknown Node"),
+                        "snippet": result.get("body", "No description."),
+                        "domain": result.get("href", "").split("/")[2] if "//" in result.get("href", "") else "web"
+                    })
+        except Exception as e:
+            logger.error(f"Search Engine Sync Error: {str(e)}")
+            
+        return extracted_data
+
     async def execute_deep_search(self, query: str) -> List[Dict[str, str]]:
         self._clean_cache()
         
@@ -40,41 +66,20 @@ class EliteWebResearchEngine:
             logger.info(f"Cache Hit for query: {normalized_query}")
             return self._query_cache[normalized_query]['data']
 
-        extracted_data: List[Dict[str, str]] = []
-        
-        try:
-            async with AsyncDDGS() as ddgs:
-                search_routine = ddgs.text(
-                    keywords=query,
-                    region=self.region,
-                    safesearch=self.safesearch,
-                    max_results=self.max_results
-                )
-                
-                async for result in search_routine:
-                    extracted_data.append({
-                        "title": result.get("title", "Unknown Node"),
-                        "snippet": result.get("body", "No description."),
-                        "domain": result.get("href", "").split("/")[2] if "//" in result.get("href", "") else "web"
-                    })
+        # ⚡ PRO LEVEL: Pushing the search task to a background CPU thread
+        extracted_data = await asyncio.to_thread(self._fetch_results_sync, query)
             
-            if extracted_data:
-                self._query_cache[normalized_query] = {
-                    'data': extracted_data,
-                    'timestamp': time.time()
-                }
-                    
-        except asyncio.TimeoutError:
-            logger.error(f"Search Engine Timeout: {query}")
-        except Exception as e:
-            logger.error(f"Critical Subsystem Failure: {str(e)}")
+        if extracted_data:
+            self._query_cache[normalized_query] = {
+                'data': extracted_data,
+                'timestamp': time.time()
+            }
             
         return extracted_data
 
     async def generate_stealth_context(self, query: str) -> tuple:
         """
         Compiles web data for the LLM without exposing raw URLs to the end-user.
-        Returns (Context String, Number of Sources Scanned).
         """
         raw_results = await self.execute_deep_search(query)
         
@@ -90,7 +95,7 @@ class EliteWebResearchEngine:
 
 # Global Singleton Instance
 research_engine = EliteWebResearchEngine()
-
+    
 # अपनी API Key यहाँ रखना मत भूलना
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
