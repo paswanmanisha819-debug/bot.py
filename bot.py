@@ -179,9 +179,8 @@ async def save_profile(client, cb):
 # --- 2. ADVANCED TEXT SOLVER (100% Clean UI & Crash-Proof Edition) ---
 @app.on_message(filters.text & ~filters.command(["start", "setup", "quiz", "owner", "space", "yt", "video", "summary", "ask", "research", "search", "topic", "battle", "admin"]))
 async def smart_solver(client, message):
-                    
-
-    # 🚀 FINAL FIX: अगर बॉट मेमोरी भूल जाए, तो एरर मत दो, सीधा डिफ़ॉल्ट सेट कर दो!
+    uid = message.from_user.id
+    
     if uid not in user_profiles: 
         user_profiles[uid] = {"class": "9", "subject": "Science"}
     
@@ -192,37 +191,27 @@ async def smart_solver(client, message):
         from groq import Groq
         groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
-        # 🌟 THE ULTIMATE STRICT PROMPT FOR ADVANCED TELEGRAM UI 🌟
         sys_prompt = (
             f"You are an Elite AI Study Companion for a {u['class']}th grade {u['subject']} CBSE student. "
             f"RESPOND IN PROFESSIONAL ENGLISH ONLY. Your primary goal is to provide responses with an ADVANCED, BEAUTIFUL, and CLEAN Telegram UI.\n"
             f"CRITICAL FORMATTING RULES FOR PERFECT UI:\n"
             f"1. 🎨 AESTHETIC HEADINGS: Always start your main answer with a beautiful, bold heading using emojis (e.g., **✨ Definition of Motion ✨**). NEVER use markdown headers like #, ##, or ###.\n"
-            f"2. 💎 BEAUTIFUL BULLET POINTS: Use custom, attractive bullet points (like 🔹, 🔸, or 🚀) instead of standard dots ('•'). This makes the text look premium.\n"
-            f"3. 🌬️ SPACING (VITAL FOR UI): You MUST add a double line break (blank line) between EVERY single bullet point and paragraph to keep the UI spacious, clean, and easy to read on mobile.\n"
-            f"4. 🚫 ZERO FLUFF: Give direct, highly accurate, and engaging answers. Do not write long, boring paragraphs. Keep it punchy.\n"
-            f"5. 📐 MATH & FORMULAS: NEVER use programming symbols like '^', '*', or '/'. You MUST use real Unicode (e.g., ², ³, ⁻¹, ×, ÷). Write formulas cleanly on their own lines, highlighted in bold (e.g., **F = m × a**).\n"
+            f"2. 💎 BEAUTIFUL BULLET POINTS: Use custom, attractive bullet points (like 🔹, 🔸, or 🚀) instead of standard dots ('•').\n"
+            f"3. 🌬️ SPACING: Add a double line break (blank line) between EVERY single bullet point and paragraph.\n"
+            f"4. 🚫 ZERO FLUFF: Give direct, highly accurate, and engaging answers.\n"
+            f"5. 📐 MATH & FORMULAS: Use real Unicode (e.g., ², ³, ⁻¹, ×, ÷). Write formulas cleanly in bold (e.g., **F = m × a**).\n"
             f"6. 💡 QUICK SUMMARY: Always end with a short, visually distinct '**💡 Quick Summary:**' section.\n"
-            f"7. ❌ STRICT NO LATEX: NEVER use raw LaTeX (like \\rho, \\omega, \\frac, \\int, \\infty). ALWAYS use clean Unicode text for math!"
+            f"7. ❌ STRICT NO LATEX: NEVER use raw LaTeX."
         )
         
-        
-        
-        # --- 🧠 ADVANCED AI MEMORY SYSTEM 🧠 ---
-        # 1. अगर यूज़र की मेमोरी नहीं है, तो एक खाली लिस्ट बनाओ
+        # Memory Management
         if uid not in user_chat_history:
             user_chat_history[uid] = []
 
-        # 2. सिस्टम प्रॉम्प्ट को सबसे ऊपर रखो (AI को उसका रोल याद दिलाने के लिए)
         messages = [{"role": "system", "content": sys_prompt}]
-
-        # 3. पुरानी यादें (पिछले 6 मैसेजेस) जोड़ो ताकि बॉट कॉन्टेक्स्ट न भूले
         messages.extend(user_chat_history[uid][-6:])
-
-        # 4. यूज़र का नया सवाल (करंट मैसेज) जोड़ो
         messages.append({"role": "user", "content": message.text})
 
-        # 5. Groq AI से जवाब मांगो (पूरी हिस्ट्री के साथ)
         chat_completion = groq_client.chat.completions.create(
             messages=messages,
             model=CHAT_MODEL,
@@ -231,29 +220,19 @@ async def smart_solver(client, message):
         
         raw_answer = chat_completion.choices[0].message.content
 
-        # 6. यूज़र का सवाल और AI का नया जवाब मेमोरी में सेव करो
         user_chat_history[uid].append({"role": "user", "content": message.text})
         user_chat_history[uid].append({"role": "assistant", "content": raw_answer})
-        # ----------------------------------------
         
-        
-        # 🧹 CLEANUP: टेलीग्राम UI को खराब करने वाले सारे सिंबल्स को डिलीट करना
-        # (हम ** को नहीं छेड़ रहे हैं ताकि बोल्ड टेक्स्ट काम करता रहे)
         clean_answer = raw_answer.replace("###", "").replace("##", "").replace("#", "").replace("`", "")
         
-        # 🎬 YouTube Video Scraper Call
         search_query = f"{message.text} class {u['class']} CBSE {u['subject']} explanation -shorts -animation"
         youtube_link = await asyncio.to_thread(get_direct_video, search_query)
         
-        # 🔘 Interactive Buttons
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton("▶️ Watch Best Video", url=youtube_link), InlineKeyboardButton("📥 Get PDF Notes", callback_data=f"gen_pdf_{message.id}")],
             [InlineKeyboardButton("🔙 Back to Main Menu", callback_data=f"back_to_menu_{message.id}")]
          ])
         
-        
-        
-        # 📐 PERFECT LAYOUT: हेडर, बॉडी और फुटर एकदम सेट
         final_reply = (
             f"📖 **{u['subject'].upper()} STUDY GUIDE**\n"
             f"━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -263,7 +242,6 @@ async def smart_solver(client, message):
             f"📸 [Follow on Instagram](https://www.instagram.com/aadit_paswan.007)"
         )
 
-        # 🚀 Send the message safely (This blocks the 400 Error Crash)
         try:
             await processing_msg.edit_text(final_reply, reply_markup=keyboard, disable_web_page_preview=True)
         except Exception as e:
@@ -272,7 +250,7 @@ async def smart_solver(client, message):
 
     except Exception as e:
         await processing_msg.edit_text(f"⚠️ *System Error:* `{str(e)}`")
-        
+                                              
                 
 
 # --- 3. PDF GENERATION (Unchanged & Safe) ---
